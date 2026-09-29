@@ -352,7 +352,6 @@ footer{padding-block:36px 48px;font-size:13px;color:var(--muted)}
       <h2 id="h-alc">Cómo leer estas cifras</h2>
     </div>
     <div class="flow" id="flow"></div>
-    <p class="files" id="files"></p>
     <div class="flow" id="prov" style="margin-top:16px"></div>
   </section>
 </main>
@@ -692,7 +691,6 @@ function renderProv(){
 }
 function renderFlow(){
   $('flow').innerHTML=FLOW.map(function(f){return '<div class="panel"><h3>'+esc(f.title)+'</h3><p>'+esc(f.detail)+'</p></div>'}).join('');
-  $('files').innerHTML='Fuentes: '+esc(SRC)+'. '+FILES.map(function(f){return '<code>'+esc(f)+'</code>'}).join(' ');
   var tp=D.title.split(' - ');$('title').innerHTML=esc(tp[0])+(tp[1]?'<span style="display:block;font-size:.55em;font-weight:500;color:var(--ink2);margin-top:8px;line-height:1.2">'+esc(tp[1].replace('50%','50'+NB+'%'))+'</span>':'');
   $('question').textContent=D.report.originalQuestion;
   $('asof').textContent=fdate(D.report.asOf);

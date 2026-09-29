@@ -481,7 +481,7 @@ SL.push({key:'scope',kicker:'Alcance, privacidad y cálculo',fig:'Alcance',
  title:'Son alertas tempranas, sin datos personales y con una regla de cálculo simple',
  notes:'Los tres textos son los del informe. Alcance: resultados 2026-2 al corte P1. Privacidad: sin nombres ni identificadores y con supresión de cursos de menos de cinco matriculados. Cálculo: reprobación es nota inferior a 3,0; tasa = reprobados / matriculados en la base de grupos.',
  html:function(){const ic=[ICON.scope,ICON.priv,ICON.calc];
-  return head(this.kicker,this.title,'')+`<div class="bd">${FLOW.map((f,i)=>`<div class="sc" data-a>${ic[i]||''}<h3>${esc(f.title)}</h3><p>${esc(f.detail)}</p>${i===0?`<div class="files">${FILES.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}</div>`).join('')}</div>`},
+  return head(this.kicker,this.title,'')+`<div class="bd">${FLOW.map((f,i)=>`<div class="sc" data-a>${ic[i]||''}<h3>${esc(f.title)}</h3><p>${esc(f.detail)}</p></div>`).join('')}</div>`},
  anim:(tl,q)=>{hdr(tl,q);rise(tl,q('.sc'),0.15,{s:.14,y:22,d:.7});if(!RM)tl.from(q('.sc svg'),{scale:.6,duration:.6,ease:'back.out(1.8)',stagger:.14,transformOrigin:'50% 50%'},0.35)}});
 
 /* 11 Fuentes y contacto */
