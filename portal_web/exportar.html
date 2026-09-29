@@ -326,11 +326,11 @@ var SEC_NAMES = {resumen:'Resumen ejecutivo',campus:'Por campus',programas:'Por 
 
 var TBL = {
   campus:{label:'Campus',title:'Indicadores por campus',cols:[
-    {k:'campus',l:'Campus',t:'campus'},{k:'cursos',l:'Cursos',t:'int'},{k:'matriculados_curso',l:'Matriculados por curso',t:'int'},
+    {k:'campus',l:'Campus',t:'campus'},{k:'cursos',l:'Cursos',t:'int'},{k:'matriculados_curso',l:'Matriculaciones en cursos',t:'int'},
     {k:'reprobados',l:'Reprobados',t:'int'},{k:'cursos_ge_50',l:'Cursos ≥ 50 %',t:'int',b:1},{k:'tasa_reprobacion_pct',l:'Tasa de reprobación %',t:'pct'}],
     def:null, ns:null, sort:'cursos_ge_50', dir:'desc', n:'all'},
   programas:{label:'Programas',title:'Programas con cursos de reprobación ≥ 50 %',cols:[
-    {k:'campus',l:'Campus',t:'campus'},{k:'programa',l:'Programa',t:'prog'},{k:'cursos',l:'Cursos',t:'int'},{k:'matriculados_curso',l:'Matriculados por curso',t:'int'},
+    {k:'campus',l:'Campus',t:'campus'},{k:'programa',l:'Programa',t:'prog'},{k:'cursos',l:'Cursos',t:'int'},{k:'matriculados_curso',l:'Matriculaciones en cursos',t:'int'},
     {k:'reprobados',l:'Reprobados',t:'int'},{k:'cursos_ge_50',l:'Cursos ≥ 50 %',t:'int',b:1},{k:'tasa_reprobacion_pct',l:'Tasa de reprobación %',t:'pct'}],
     def:null, ns:['10','20','40','all'], sort:'cursos_ge_50', dir:'desc', n:'20'},
   cursos:{label:'Cursos críticos',title:'Cursos con reprobación ≥ 50 %',cols:[
