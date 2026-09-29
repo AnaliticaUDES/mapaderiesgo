@@ -1,0 +1,736 @@
+<title>Mapa de Riesgo Académico UDES 2026-2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Schibsted+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: columna de lectura de 1080px; barra de campus fija arriba; secciones de afirmación + gráfico + detalle. */
+:root{
+  --bg:#f3f6f7; --surface:#ffffff; --surface2:#eaf0f2;
+  --ink:#13232b; --ink2:#42545d; --muted:#5a6b74; --line:#d7e0e4; --line2:#c3cfd5;
+  --brand:#0b5a75; --brand-ink:#ffffff; --brand-soft:#dcecf2;
+  --risk:#b83c0c; --risk-soft:#fbe6dc; --neutral-bar:#9db0ba;
+  --ok:#1d7a4a; --warn:#9a6200; --warn-soft:#fbefd5;
+  --font-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-head:'Schibsted Grotesk','IBM Plex Sans',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  --ease-out:cubic-bezier(0.23,1,0.32,1);
+  --shadow:0 1px 2px rgba(19,35,43,.06),0 4px 14px rgba(19,35,43,.05);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d171b; --surface:#14222a; --surface2:#1b2d36;
+    --ink:#e7eff2; --ink2:#b1c1c8; --muted:#93a5ae; --line:#26373f; --line2:#35494f;
+    --brand:#6ec3dd; --brand-ink:#08222c; --brand-soft:#173540;
+    --risk:#ff8a55; --risk-soft:#3a2219; --neutral-bar:#4b616b;
+    --ok:#56c98a; --warn:#f0b24d; --warn-soft:#33270f;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d171b; --surface:#14222a; --surface2:#1b2d36;
+  --ink:#e7eff2; --ink2:#b1c1c8; --muted:#93a5ae; --line:#26373f; --line2:#35494f;
+  --brand:#6ec3dd; --brand-ink:#08222c; --brand-soft:#173540;
+  --risk:#ff8a55; --risk-soft:#3a2219; --neutral-bar:#4b616b;
+  --ok:#56c98a; --warn:#f0b24d; --warn-soft:#33270f;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--font-body);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--font-head);margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1080px;margin-inline:auto;padding-inline:16px}
+.skip{position:absolute;left:-999px}
+.skip:focus{left:16px;top:8px;background:var(--surface);padding:8px 12px;z-index:50}
+
+/* Cabecera */
+.hero{padding-block:32px 24px}
+.eyebrow{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.eyebrow .sep{width:3px;height:3px;border-radius:50%;background:var(--line2)}
+h1{font-size:clamp(28px,5.2vw,44px);line-height:1.08;margin-top:12px;font-weight:700;max-width:26ch}
+.question{margin-top:14px;font-size:17px;color:var(--ink2);max-width:62ch}
+.notice{margin-top:20px;display:flex;gap:12px;align-items:flex-start;background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);border-radius:8px;padding:12px 14px;max-width:70ch;font-size:14px}
+.notice svg{flex:none;margin-top:2px;color:var(--warn)}
+.notice strong{font-weight:600}
+
+/* Barra de filtro */
+.filterbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-block:1px solid var(--line)}
+.filterbar .wrap{display:flex;gap:12px;align-items:center;padding-block:10px}
+.filterlabel{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;flex:none}
+.chips{display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none;padding-block:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line2);background:var(--surface);border-radius:999px;padding:6px 13px;font-size:14px;font-weight:500;display:flex;gap:8px;align-items:baseline;transition:background-color 150ms ease,border-color 150ms ease,color 150ms ease,transform 120ms var(--ease-out)}
+.chip small{font-size:12px;color:var(--muted);font-weight:500;transition:color 150ms ease}
+.chip:active{transform:scale(.97)}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.chip[aria-pressed="true"] small{color:inherit;opacity:.85}
+@media (hover:hover) and (pointer:fine){.chip[aria-pressed="false"]:hover{border-color:var(--brand);background:var(--brand-soft)}}
+.iconbtn{flex:none;width:36px;height:36px;border-radius:8px;border:1px solid var(--line2);background:var(--surface);display:grid;place-items:center;transition:transform 120ms var(--ease-out),border-color 150ms ease}
+.iconbtn:active{transform:scale(.95)}
+@media (hover:hover) and (pointer:fine){.iconbtn:hover{border-color:var(--brand)}}
+.sitenav{display:none;gap:16px;font-size:14px}
+.sitenav a{color:var(--ink2);text-decoration:none;font-weight:500}
+.sitenav a:hover{color:var(--brand);text-decoration:underline}
+@media (min-width:900px){.sitenav{display:flex}}
+
+/* Secciones */
+section{padding-block:36px 8px}
+.sechead{margin-bottom:18px;max-width:72ch}
+.sechead .kicker{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sechead h2{font-size:clamp(22px,3.4vw,30px);line-height:1.18;margin-top:6px;font-weight:600}
+.sechead p{margin-top:8px;color:var(--ink2)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;box-shadow:var(--shadow)}
+.panel h3{font-size:16px;font-weight:600}
+.panel .sub{font-size:13px;color:var(--muted);margin-top:2px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.kpi .lbl{font-size:13px;color:var(--ink2);font-weight:500}
+.kpi .num{font-family:var(--font-head);font-size:clamp(30px,4vw,38px);font-weight:700;line-height:1;letter-spacing:-.02em}
+.kpi.risk .num{color:var(--risk)}
+.kpi .det{font-size:13px;color:var(--muted);line-height:1.4}
+.kpi .det b{color:var(--ink2);font-weight:600}
+
+/* Listas de barras */
+.rows{display:flex;flex-direction:column;gap:14px;margin-top:16px}
+.row{display:grid;grid-template-columns:1fr auto;gap:5px 12px;background:none;border:0;padding:6px 8px;margin:-6px -8px;text-align:left;border-radius:6px;transition:background-color 120ms ease,opacity 200ms ease}
+button.row{width:calc(100% + 16px)}
+.row .rl{font-size:14px;font-weight:500;min-width:0;overflow-wrap:anywhere;line-height:1.3}
+.row .rl em{font-style:normal;font-size:12px;color:var(--muted);font-weight:500;margin-left:6px;white-space:nowrap}
+.row .rv{font-weight:600;font-size:14px;white-space:nowrap;text-align:right}
+.row .track{grid-column:1/-1;height:10px;background:var(--surface2);border-radius:0 4px 4px 0;position:relative}
+.row .bar{position:absolute;inset:0;background:var(--risk);border-radius:0 4px 4px 0;transform-origin:left center;display:block}
+.row .rm{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.row.dim .bar{background:var(--neutral-bar)}
+.row.dim{opacity:.75}
+.row .ref{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px dashed var(--ink2)}
+@media (hover:hover) and (pointer:fine){button.row:hover{background:var(--surface2)}}
+.legendnote{font-size:12px;color:var(--muted);margin-top:12px;display:flex;align-items:center;gap:8px}
+.legendnote i{display:inline-block;width:0;height:12px;border-left:2px dashed var(--ink2)}
+
+/* Programas */
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:6px}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:7px 12px;font-size:13px;font-weight:500;transition:background-color 150ms ease,color 150ms ease}
+.seg button+button{border-left:1px solid var(--line2)}
+.seg button[aria-pressed="true"]{background:var(--brand);color:var(--brand-ink)}
+.morebtn{margin-top:16px;border:1px solid var(--line2);background:var(--surface);border-radius:8px;padding:8px 14px;font-size:14px;font-weight:500;transition:transform 120ms var(--ease-out),border-color 150ms ease}
+.morebtn:active{transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){.morebtn:hover{border-color:var(--brand)}}
+.ctag{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--brand);background:var(--brand-soft);padding:1px 6px;border-radius:4px;margin-left:8px;white-space:nowrap;vertical-align:1px}
+
+/* Gráficos de cursos */
+.chartwrap{margin-top:12px;position:relative;width:100%}
+.chartwrap svg{display:block;width:100%;overflow:visible}
+.gridline{stroke:var(--line);stroke-width:1}
+.axis{stroke:var(--line2);stroke-width:1}
+.tick{fill:var(--muted);font-size:11px;font-family:var(--font-body)}
+.axtitle{fill:var(--ink2);font-size:12px;font-family:var(--font-body);font-weight:500}
+.dot{fill:var(--risk);fill-opacity:.7;stroke:var(--surface);stroke-width:1.5;transition:fill-opacity 120ms ease}
+.dot.on{fill-opacity:1;stroke:var(--ink);stroke-width:2}
+.hist{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end;height:200px;margin-top:16px;padding-top:22px}
+.hcol{display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;gap:6px;background:none;border:0;padding:0;position:relative}
+.hcol .hv{font-weight:600;font-size:14px;text-align:center}
+.hcol .hb{border-radius:4px 4px 0 0;min-height:2px;transform-origin:bottom center;background:var(--risk)}
+.hlab{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;font-size:12px;color:var(--muted);text-align:center;margin-top:6px;border-top:1px solid var(--line2);padding-top:6px}
+.hbox{flex:1;min-height:0;display:flex;align-items:flex-end}
+.hbox .hb{width:100%}
+
+/* Tabla */
+.tools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:12px}
+.search{flex:1 1 240px;position:relative;max-width:420px}
+.search input{width:100%;font:inherit;padding:9px 12px 9px 36px;border:1px solid var(--line2);border-radius:8px;background:var(--surface);color:var(--ink)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.count{font-size:13px;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:14px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;font-weight:600;color:var(--ink2);background:var(--surface2);position:sticky;top:0;white-space:nowrap}
+th button{background:none;border:0;padding:0;font:inherit;font-weight:600;display:inline-flex;gap:4px;align-items:center;color:inherit}
+th .arr{opacity:.35;font-size:10px}
+th[aria-sort="ascending"] .arr,th[aria-sort="descending"] .arr{opacity:1;color:var(--brand)}
+td.n,th.n{text-align:right}
+tbody tr{transition:background-color 100ms ease}
+tbody tr.hl,tbody tr:hover{background:var(--surface2)}
+tbody tr:last-child td{border-bottom:0}
+.code{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.cn{font-weight:500;line-height:1.3}
+.pill{display:inline-flex;align-items:center;gap:8px;min-width:96px}
+.pill .pb{flex:1;height:6px;background:var(--surface2);border-radius:0 3px 3px 0;position:relative;min-width:40px}
+.pill .pb i{position:absolute;inset:0;background:var(--risk);border-radius:0 3px 3px 0;transform-origin:left}
+.pill b{font-weight:600;min-width:56px;text-align:right}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+
+/* Calidad */
+.qgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}
+.cov{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.cov .cr{display:grid;grid-template-columns:110px 1fr 56px;gap:10px;align-items:center;font-size:14px}
+.cov .ct{height:10px;background:var(--surface2);border-radius:0 4px 4px 0;position:relative}
+.cov .ct i{position:absolute;inset:0;background:var(--brand);border-radius:0 4px 4px 0;transform-origin:left}
+.cov .cr b{text-align:right}
+dl.checks{margin:14px 0 0;display:grid;grid-template-columns:1fr auto;gap:0}
+dl.checks dt,dl.checks dd{margin:0;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+dl.checks dt{color:var(--ink2);padding-right:12px}
+dl.checks dd{font-weight:600;text-align:right;display:flex;gap:8px;align-items:center;justify-content:flex-end}
+dl.checks dt:nth-last-of-type(1),dl.checks dd:last-of-type{border-bottom:0}
+.tag{font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;letter-spacing:.02em}
+.tag.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.tag.rev{background:var(--warn-soft);color:var(--warn)}
+.tag.inf{background:var(--surface2);color:var(--ink2)}
+
+/* Alcance */
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.flow .panel h3{display:flex;gap:10px;align-items:center}
+.flow .panel p{margin-top:10px;color:var(--ink2)}
+.files{margin-top:18px;font-size:13px;color:var(--muted)}
+.files code{font-family:var(--font-mono);font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:4px;margin-right:6px;display:inline-block;margin-top:4px}
+footer{padding-block:36px 48px;font-size:13px;color:var(--muted)}
+
+/* Tooltip */
+#tip{position:fixed;left:0;top:0;z-index:100;pointer-events:none;background:var(--ink);color:var(--bg);border-radius:8px;padding:9px 11px;font-size:13px;line-height:1.4;max-width:280px;opacity:0;transition:opacity 120ms ease;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#tip.show{opacity:1}
+#tip b{font-weight:600}
+#tip .t{font-weight:600;margin-bottom:3px;display:block}
+#tip .m{opacity:.8;display:block}
+#tip hr{border:0;border-top:1px solid color-mix(in srgb,var(--bg) 25%,transparent);margin:6px 0}
+
+@media (max-width:520px){
+  .filterlabel{display:none}
+  .panel{padding:14px}
+  .cov .cr{grid-template-columns:84px 1fr 50px}
+}
+@media (prefers-reduced-motion:reduce){
+  .chip,.iconbtn,.morebtn,.row,tbody tr{transition:none}
+}
+</style>
+
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow"><span>Universidad de Santander</span><i class="sep"></i><span>Periodo 2026-2</span><i class="sep"></i><span>Corte P1</span><i class="sep"></i><span id="asof"></span></div>
+    <h1 id="title">Mapa de Riesgo Académico</h1>
+    <p class="question" id="question"></p>
+    <div class="notice" role="note">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <p><strong>Alertas tempranas, no resultados definitivos.</strong> <span id="noticeText"></span></p>
+    </div>
+  </div>
+</header>
+
+<div class="filterbar" id="filterbar">
+  <div class="wrap">
+    <span class="filterlabel" id="fl">Campus</span>
+    <div class="chips" id="chips" role="group" aria-labelledby="fl"></div>
+    <nav class="sitenav" aria-label="Secciones">
+      <a href="#campus">Campus</a><a href="#programas">Programas</a><a href="#cursos">Cursos</a><a href="#calidad">Calidad</a><a href="#alcance">Alcance</a>
+    </nav>
+    <button class="iconbtn" id="theme" type="button" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </div>
+</div>
+
+<main id="main" class="wrap">
+  <section id="resumen" aria-labelledby="h-res" style="padding-top:28px">
+    <div class="sechead">
+      <span class="kicker" id="scopeKicker">Indicadores institucionales</span>
+      <h2 id="h-res"></h2>
+    </div>
+    <div class="kpis" id="kpis">
+      <div class="kpi"><span class="lbl">Tasa de reprobación</span><span class="num risk" id="k-tasa" style="color:var(--risk)"></span><span class="det" id="d-tasa"></span></div>
+      <div class="kpi"><span class="lbl">Matrículas de curso reprobadas</span><span class="num" id="k-rep"></span><span class="det" id="d-rep"></span></div>
+      <div class="kpi risk"><span class="lbl">Cursos con reprobación ≥ 50 %</span><span class="num" id="k-ge"></span><span class="det" id="d-ge"></span></div>
+      <div class="kpi"><span class="lbl">Programas con curso ≥ 50 %</span><span class="num" id="k-prog"></span><span class="det" id="d-prog"></span></div>
+      <div class="kpi"><span class="lbl">Cursos con detalle público</span><span class="num" id="k-pub"></span><span class="det" id="d-pub"></span></div>
+    </div>
+  </section>
+
+  <section id="campus" aria-labelledby="h-camp">
+    <div class="sechead">
+      <span class="kicker">Campus</span>
+      <h2 id="h-camp"></h2>
+      <p>Seleccione un campus en las barras o en el filtro superior para ver solo sus programas y cursos.</p>
+    </div>
+    <div class="grid2">
+      <div class="panel" id="p-camp-rate">
+        <h3>Tasa de reprobación P1</h3>
+        <p class="sub">Reprobados sobre matrículas de curso, escala de 0 a <span id="rateMax"></span> %</p>
+        <div class="rows" id="camp-rate"></div>
+        <p class="legendnote"><i></i><span id="refNote"></span></p>
+      </div>
+      <div class="panel" id="p-camp-ge">
+        <h3>Cursos con reprobación ≥ 50 %</h3>
+        <p class="sub">Número de cursos y proporción sobre todos los cursos del campus</p>
+        <div class="rows" id="camp-ge"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="programas" aria-labelledby="h-prog">
+    <div class="sechead">
+      <span class="kicker">Programas</span>
+      <h2 id="h-prog"></h2>
+      <p>Ranking de programas. Pase el cursor o enfoque una fila para ver el detalle.</p>
+    </div>
+    <div class="panel" id="p-prog">
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Ordenar ranking por">
+          <button type="button" data-m="ge" aria-pressed="true">Cursos ≥ 50 %</button>
+          <button type="button" data-m="tasa" aria-pressed="false">Tasa de reprobación</button>
+        </div>
+        <span class="count" id="progCount"></span>
+      </div>
+      <div class="rows" id="progRows"></div>
+      <button class="morebtn" id="progMore" type="button" hidden></button>
+    </div>
+  </section>
+
+  <section id="cursos" aria-labelledby="h-cur">
+    <div class="sechead">
+      <span class="kicker">Cursos críticos</span>
+      <h2 id="h-cur"></h2>
+      <p>Cada curso-grupo con reprobación P1 de 50 % o más. El detalle de cursos con menos de 5 matriculados está suprimido por privacidad.</p>
+    </div>
+    <div class="grid2" style="margin-bottom:16px">
+      <div class="panel" id="p-scatter">
+        <h3>Tamaño del grupo frente a reprobación</h3>
+        <p class="sub">Cada punto es un curso-grupo. Pase el cursor para ver el detalle.</p>
+        <div class="chartwrap" id="scatter"></div>
+      </div>
+      <div class="panel" id="p-hist">
+        <h3>Distribución por tasa de reprobación</h3>
+        <p class="sub">Número de cursos críticos en cada tramo</p>
+        <div id="hist"></div>
+      </div>
+    </div>
+    <div class="tools">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Buscar curso, programa o código" aria-label="Buscar curso, programa o código" autocomplete="off">
+      </div>
+      <span class="count" id="tblCount" aria-live="polite"></span>
+    </div>
+    <div class="tablewrap" id="tblwrap" tabindex="0" role="region" aria-label="Tabla de cursos críticos">
+      <table>
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <button class="morebtn" id="tblMore" type="button" hidden></button>
+  </section>
+
+  <section id="calidad" aria-labelledby="h-cal">
+    <div class="sechead">
+      <span class="kicker">Calidad de datos</span>
+      <h2 id="h-cal"></h2>
+      <p>Controles de cobertura y consistencia de las bases de origen. Aplican a toda la institución y no cambian con el filtro de campus.</p>
+    </div>
+    <div class="qgrid">
+      <div class="panel" id="p-cov">
+        <h3>Cobertura por corte</h3>
+        <p class="sub">Porcentaje de registros con nota disponible</p>
+        <div class="cov" id="cov"></div>
+      </div>
+      <div class="panel">
+        <h3>Controles de consistencia</h3>
+        <p class="sub">Filas o grupos afectados por cada control</p>
+        <dl class="checks" id="checks"></dl>
+      </div>
+    </div>
+  </section>
+
+  <section id="alcance" aria-labelledby="h-alc">
+    <div class="sechead">
+      <span class="kicker">Alcance, privacidad y cálculo</span>
+      <h2 id="h-alc">Cómo leer estas cifras</h2>
+    </div>
+    <div class="flow" id="flow"></div>
+    <p class="files" id="files"></p>
+  </section>
+</main>
+
+<footer><div class="wrap" id="foot"></div></footer>
+<div id="tip" role="tooltip"></div>
+
+<script type="application/json" id="data">__DATA__</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+(function(){
+"use strict";
+var D=JSON.parse(document.getElementById('data').textContent);
+var Q=D.queries, INST=Q.institutional.rows[0], CAMP=Q.campus.rows, PROG=Q.programs.rows, CRIT=Q.critical_courses.rows, QUA=Q.quality.rows[0];
+var FLOW=Q.institutional.source.evidenceFlow, FILES=Q.institutional.source.files, SRC=Q.institutional.source.label;
+var $=function(id){return document.getElementById(id)};
+var NB=' ';
+
+/* ---------- formato ---------- */
+function fmtN(n){return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.')}
+function fmtD(n,d){var s=Number(n).toFixed(d===undefined?2:d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return s.join(',')}
+function fmtP(n,d){return fmtD(n,d)+NB+'%'}
+var ACC={diseno:"diseño",ensenanza:"enseñanza",informaticas:"informáticas",informatico:"informático",electivas:"electivas",ingenieria:'ingeniería',ingenierias:'ingenierías',tecnologia:'tecnología',tecnico:'técnico',administracion:'administración',comunicacion:'comunicación',matematicas:'matemáticas',psicologia:'psicología',contaduria:'contaduría',gestion:'gestión',informacion:'información',fisica:'física',quimica:'química',bacteriologia:'bacteriología',clinico:'clínico',morfofisiologia:'morfofisiología',quirurgica:'quirúrgica',basicas:'básicas',grafico:'gráfico',supervision:'supervisión',informatica:'informática',publica:'pública',investigacion:'investigación',antropologia:'antropología',microbiologia:'microbiología',computacion:'computación',petroquimica:'petroquímica',energias:'energías',educacion:'educación',instalacion:'instalación',logistica:'logística',geologia:'geología',metodos:'métodos',analisis:'análisis',calculo:'cálculo',algebra:'álgebra',estadistica:'estadística',practica:'práctica',etica:'ética',organizacion:'organización',produccion:'producción',evaluacion:'evaluación',biologia:'biología',economia:'economía',electronica:'electrónica',mecanica:'mecánica',fisiologia:'fisiología',anatomia:'anatomía',patologia:'patología',farmacologia:'farmacología',pedagogia:'pedagogía',sociologia:'sociología',catedra:'cátedra',opcion:'opción',metodologia:'metodología',dinamica:'dinámica',termodinamica:'termodinámica',electricidad:'electricidad',comprension:'comprensión',produccion:'producción',formulacion:'formulación'};
+var SMALL={de:1,del:1,la:1,el:1,en:1,y:1,e:1,para:1,por:1,a:1,las:1,los:1,con:1,al:1};
+function tc(s){return String(s)}
+var CNAME={BOGOTA:'Bogotá',BUCARAMANGA:'Bucaramanga',CUCUTA:'Cúcuta',VALLEDUPAR:'Valledupar'};
+function cn(c){return CNAME[c]||tc(c)}
+function norm(s){return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+var MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function fdate(iso){var p=iso.split('-');return 'Datos al '+Number(p[2])+' de '+MESES[Number(p[1])-1]+' de '+p[0]}
+
+/* ---------- estado y alcance ---------- */
+var S={campus:'ALL',metric:'ge',progAll:false,q:'',sk:'tasa',sd:-1,shown:15};
+var motionOK=false;
+var panelsEntered={};
+
+function scopeData(){
+  if(S.campus==='ALL'){
+    return {label:'Toda la institución',tasa:INST.tasa_reprobacion_pct,rep:INST.reprobados,mat:INST.matriculados_curso,cursos:INST.cursos,ge:INST.cursos_ge_50,
+      progs:INST.programas_con_curso_ge_50,pub:QUA.critical_groups_public,supp:QUA.critical_groups_suppressed_lt5};
+  }
+  var c=CAMP.filter(function(r){return r.campus===S.campus})[0];
+  var pub=CRIT.filter(function(r){return r.campus===S.campus}).length;
+  return {label:cn(S.campus),tasa:c.tasa_reprobacion_pct,rep:c.reprobados,mat:c.matriculados_curso,cursos:c.cursos,ge:c.cursos_ge_50,
+    progs:PROG.filter(function(p){return p.campus===S.campus&&p.cursos_ge_50>0}).length,pub:pub,supp:c.cursos_ge_50-pub};
+}
+function inScope(r){return S.campus==='ALL'||r.campus===S.campus}
+
+/* ---------- tooltip ---------- */
+var tip=$('tip');
+function showTip(html,x,y){
+  tip.innerHTML=html;tip.classList.add('show');
+  var w=tip.offsetWidth,h=tip.offsetHeight,vw=document.documentElement.clientWidth,vh=window.innerHeight;
+  var l=x+14,t=y+14;
+  if(l+w>vw-8)l=Math.max(8,x-w-14);
+  if(t+h>vh-8)t=Math.max(8,y-h-14);
+  tip.style.transform='translate('+l+'px,'+t+'px)';
+}
+function hideTip(){tip.classList.remove('show')}
+function bindTip(el,fn){
+  el.addEventListener('pointermove',function(e){if(e.pointerType==='touch')return;showTip(fn(),e.clientX,e.clientY)});
+  el.addEventListener('pointerleave',hideTip);
+  el.addEventListener('focus',function(){var r=el.getBoundingClientRect();showTip(fn(),r.left+r.width/2,r.top)});
+  el.addEventListener('blur',hideTip);
+}
+
+/* ---------- movimiento ---------- */
+function enterPanel(id,fn){
+  var el=$(id);
+  if(!el)return;
+  el._anim=fn;
+  if(panelsEntered[id]&&motionOK)fn();
+}
+function tweenNum(el,to,fmt,animate){
+  el._fmt=fmt;el._target=to;
+  if(!animate){if(el._t)el._t.kill();el.textContent=fmt(to);el._v=to;return}
+  var o={v:el._v===undefined?0:el._v};
+  if(el._t)el._t.kill();
+  el._t=gsap.to(o,{v:to,duration:el._intro?1.1:.7,ease:'power3.out',onUpdate:function(){el.textContent=fmt(o.v)},onComplete:function(){el.textContent=fmt(to)}});
+  el._v=to;
+}
+function growBars(root,sel,axis){
+  var bars=root.querySelectorAll(sel);
+  if(!bars.length)return;
+  var v={};v[axis||'scaleX']=0;
+  gsap.from(bars,Object.assign({},v,{duration:.7,ease:'power3.out',stagger:.035,clearProps:'none'}));
+}
+
+/* ---------- KPIs ---------- */
+var kpiFirst=true;
+function renderKPIs(){
+  var s=scopeData();
+  $('h-res').textContent=(S.campus==='ALL'?'Institución completa':s.label)+': '+fmtN(s.ge)+' de '+fmtN(s.cursos)+' cursos alcanzan reprobación de 50 % o más';
+  $('scopeKicker').textContent=S.campus==='ALL'?'Indicadores institucionales':'Indicadores del campus '+s.label;
+  var animate=motionOK&&panelsEntered.kpis;
+  tweenNum($('k-tasa'),s.tasa,function(v){return fmtP(v,2)},animate);
+  tweenNum($('k-rep'),s.rep,fmtN,animate);
+  tweenNum($('k-ge'),s.ge,fmtN,animate);
+  tweenNum($('k-prog'),s.progs,fmtN,animate);
+  tweenNum($('k-pub'),s.pub,fmtN,animate);
+  $('d-tasa').innerHTML=S.campus==='ALL'?'Nota inferior a 3,0 al corte P1':'Institucional: <b>'+fmtP(INST.tasa_reprobacion_pct)+'</b>';
+  $('d-rep').innerHTML='de <b>'+fmtN(s.mat)+'</b> matrículas de curso';
+  $('d-ge').innerHTML=fmtP(s.ge/s.cursos*100)+' de los cursos del '+(S.campus==='ALL'?'total':'campus');
+  $('d-prog').innerHTML=S.campus==='ALL'?'en <b>'+INST.campus_con_curso_ge_50+'</b> campus':'de <b>'+PROG.filter(inScope).length+'</b> programas del campus';
+  $('d-pub').innerHTML='de '+fmtN(s.ge)+'; <b>'+fmtN(s.supp)+'</b> suprimidos por tener menos de 5 matriculados';
+}
+
+/* ---------- filtro ---------- */
+function renderChips(){
+  var h='<button class="chip" type="button" data-c="ALL" aria-pressed="'+(S.campus==='ALL')+'">Todos <small>'+INST.cursos_ge_50+'</small></button>';
+  CAMP.forEach(function(c){h+='<button class="chip" type="button" data-c="'+c.campus+'" aria-pressed="'+(S.campus===c.campus)+'">'+cn(c.campus)+' <small>'+c.cursos_ge_50+'</small></button>'});
+  $('chips').innerHTML=h;
+}
+function updateChips(){document.querySelectorAll('#chips .chip').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.c===S.campus))})}
+$('chips').addEventListener('click',function(e){var b=e.target.closest('.chip');if(b)setCampus(b.dataset.c)});
+function setCampus(c){
+  S.campus=c;S.shown=15;S.progAll=false;
+  updateChips();renderAll(true);
+}
+
+/* ---------- campus ---------- */
+function rowHTML(o){
+  return '<'+(o.btn?'button type="button"':'div')+' class="row'+(o.dim?' dim':'')+'" '+(o.attrs||'')+'>'+
+    '<span class="rl">'+o.label+'</span><span class="rv">'+o.value+'</span>'+
+    '<span class="track"><i class="bar" style="transform:scaleX('+o.frac.toFixed(4)+')"></i>'+(o.ref!==undefined?'<i class="ref" style="left:'+(o.ref*100).toFixed(2)+'%"></i>':'')+'</span>'+
+    (o.meta?'<span class="rm">'+o.meta+'</span>':'')+'</'+(o.btn?'button':'div')+'>';
+}
+function renderCampus(){
+  var maxR=Math.max.apply(null,CAMP.map(function(c){return c.tasa_reprobacion_pct}));
+  var domR=Math.ceil(maxR/5)*5;
+  $('rateMax').textContent=domR;
+  var ord=CAMP.slice().sort(function(a,b){return b.tasa_reprobacion_pct-a.tasa_reprobacion_pct});
+  var h='';
+  ord.forEach(function(c){
+    h+=rowHTML({btn:1,label:cn(c.campus),value:fmtP(c.tasa_reprobacion_pct),frac:c.tasa_reprobacion_pct/domR,ref:INST.tasa_reprobacion_pct/domR,dim:S.campus!=='ALL'&&S.campus!==c.campus,attrs:'data-c="'+c.campus+'" aria-pressed="'+(S.campus===c.campus)+'"',
+      meta:fmtN(c.reprobados)+' reprobados de '+fmtN(c.matriculados_curso)+' matrículas de curso'});
+  });
+  $('camp-rate').innerHTML=h;
+  $('refNote').textContent='Línea punteada: tasa institucional, '+fmtP(INST.tasa_reprobacion_pct);
+  var ord2=CAMP.slice().sort(function(a,b){return b.cursos_ge_50-a.cursos_ge_50});
+  var maxG=ord2[0].cursos_ge_50,h2='';
+  ord2.forEach(function(c){
+    h2+=rowHTML({btn:1,label:cn(c.campus),value:fmtN(c.cursos_ge_50)+' cursos',frac:c.cursos_ge_50/maxG,dim:S.campus!=='ALL'&&S.campus!==c.campus,attrs:'data-c="'+c.campus+'" aria-pressed="'+(S.campus===c.campus)+'"',
+      meta:fmtP(c.cursos_ge_50/c.cursos*100)+' de sus '+fmtN(c.cursos)+' cursos'});
+  });
+  $('camp-ge').innerHTML=h2;
+  var top=ord2[0];
+  $('h-camp').textContent=cn(top.campus)+' concentra '+top.cursos_ge_50+' de los '+INST.cursos_ge_50+' cursos con reprobación ≥ 50 % ('+fmtP(top.cursos_ge_50/INST.cursos_ge_50*100,0)+')';
+  ['camp-rate','camp-ge'].forEach(function(id){
+    var rows=$(id).querySelectorAll('.row');
+    rows.forEach(function(r,i){
+      var c=r.dataset.c,cd=CAMP.filter(function(x){return x.campus===c})[0];
+      bindTip(r,function(){return '<span class="t">'+cn(c)+'</span>Tasa: <b>'+fmtP(cd.tasa_reprobacion_pct)+'</b><span class="m">'+fmtN(cd.reprobados)+' reprobados de '+fmtN(cd.matriculados_curso)+'</span><span class="m">'+fmtN(cd.cursos_ge_50)+' de '+fmtN(cd.cursos)+' cursos con reprobación ≥ 50 %</span>'});
+    });
+  });
+  enterPanel('p-camp-rate',function(){growBars($('p-camp-rate'),'.bar')});
+  enterPanel('p-camp-ge',function(){growBars($('p-camp-ge'),'.bar')});
+}
+['camp-rate','camp-ge'].forEach(function(id){
+  $(id).addEventListener('click',function(e){var b=e.target.closest('.row');if(!b)return;var c=b.dataset.c;setCampus(S.campus===c?'ALL':c);var nb=document.querySelector('#'+id+' .row[data-c="'+c+'"]');if(nb)nb.focus()});
+});
+
+/* ---------- programas ---------- */
+function progList(){
+  var l=PROG.filter(inScope);
+  if(S.metric==='ge'){l=l.filter(function(p){return p.cursos_ge_50>0});l.sort(function(a,b){return b.cursos_ge_50-a.cursos_ge_50||b.tasa_reprobacion_pct-a.tasa_reprobacion_pct})}
+  else l.sort(function(a,b){return b.tasa_reprobacion_pct-a.tasa_reprobacion_pct||b.matriculados_curso-a.matriculados_curso});
+  return l;
+}
+function renderPrograms(){
+  var list=progList(),lim=S.progAll?list.length:10,vis=list.slice(0,lim);
+  var maxv=vis.length?(S.metric==='ge'?Math.max.apply(null,list.map(function(p){return p.cursos_ge_50})):Math.max.apply(null,list.map(function(p){return p.tasa_reprobacion_pct}))):1;
+  var h='';
+  vis.forEach(function(p,i){
+    var val=S.metric==='ge'?p.cursos_ge_50:p.tasa_reprobacion_pct;
+    h+=rowHTML({label:esc(tc(p.programa))+(S.campus==='ALL'?'<span class="ctag">'+esc(cn(p.campus))+'</span>':''),
+      value:S.metric==='ge'?fmtN(p.cursos_ge_50)+' de '+fmtN(p.cursos):fmtP(p.tasa_reprobacion_pct),frac:val/maxv,
+      meta:S.metric==='ge'?'Tasa '+fmtP(p.tasa_reprobacion_pct)+' · '+fmtN(p.matriculados_curso)+' matrículas de curso':fmtN(p.cursos_ge_50)+' de '+fmtN(p.cursos)+' cursos ≥ 50 % · '+fmtN(p.matriculados_curso)+' matrículas de curso',
+      attrs:'data-i="'+i+'" tabindex="0"'});
+  });
+  $('progRows').innerHTML=h||'<p class="empty">Sin programas para mostrar.</p>';
+  $('progRows').querySelectorAll('.row').forEach(function(r){
+    var p=vis[+r.dataset.i];
+    bindTip(r,function(){return '<span class="t">'+esc(tc(p.programa))+'</span><span class="m">'+esc(cn(p.campus))+'</span><hr>Cursos ≥ 50 %: <b>'+fmtN(p.cursos_ge_50)+'</b> de '+fmtN(p.cursos)+'<br>Tasa de reprobación: <b>'+fmtP(p.tasa_reprobacion_pct)+'</b><span class="m">'+fmtN(p.reprobados)+' reprobados de '+fmtN(p.matriculados_curso)+' matrículas de curso</span>'});
+  });
+  var top=list[0];
+  $('h-prog').textContent=top?(S.metric==='ge'?tc(top.programa)+(S.campus==='ALL'?' ('+cn(top.campus)+')':'')+' tiene más cursos críticos: '+top.cursos_ge_50+' de '+top.cursos:tc(top.programa)+(S.campus==='ALL'?' ('+cn(top.campus)+')':'')+' tiene la mayor tasa: '+fmtP(top.tasa_reprobacion_pct)):'Sin programas en este campus';
+  $('progCount').textContent=S.metric==='ge'?fmtN(list.length)+' programas con al menos un curso ≥ 50 %':fmtN(list.length)+' programas · las tasas de grupos pequeños varían mucho';
+  var mb=$('progMore');mb.hidden=list.length<=10;mb.textContent=S.progAll?'Mostrar solo los 10 primeros':'Ver los '+list.length+' programas';
+  document.querySelectorAll('#p-prog .seg button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.m===S.metric))});
+  enterPanel('p-prog',function(){growBars($('progRows'),'.bar')});
+}
+document.querySelector('#p-prog .seg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.metric=b.dataset.m;S.progAll=false;renderPrograms()});
+$('progMore').addEventListener('click',function(){S.progAll=!S.progAll;renderPrograms()});
+
+/* ---------- cursos: dispersión ---------- */
+var scDots=[],scRows=[];
+function drawScatter(){
+  var host=$('scatter'),W=Math.max(260,host.clientWidth),H=W<520?300:340;
+  var m={l:42,r:10,t:10,b:44},iw=W-m.l-m.r,ih=H-m.t-m.b;
+  scRows=CRIT.filter(inScope);
+  var xmax=50,x=function(v){return m.l+v/xmax*iw},y=function(v){return m.t+(100-v)/50*ih};
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Dispersión de cursos críticos: matriculados en el eje horizontal y tasa de reprobación en el vertical. La tabla inferior contiene los mismos datos.">';
+  [50,60,70,80,90,100].forEach(function(v){s+='<line class="gridline" x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text class="tick" x="'+(m.l-8)+'" y="'+(y(v)+4)+'" text-anchor="end">'+v+' %</text>'});
+  [0,10,20,30,40,50].forEach(function(v){s+='<text class="tick" x="'+x(v)+'" y="'+(H-m.b+18)+'" text-anchor="middle">'+v+'</text>'});
+  s+='<line class="axis" x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+y(50)+'" y2="'+y(50)+'"/>';
+  s+='<text class="axtitle" x="'+(m.l+iw/2)+'" y="'+(H-6)+'" text-anchor="middle">Matriculados en el grupo</text>';
+  s+='<g id="dots">';
+  scRows.forEach(function(r,i){s+='<circle class="dot" data-i="'+i+'" cx="'+x(r.matriculados).toFixed(1)+'" cy="'+y(r.tasa_reprobacion_pct).toFixed(1)+'" r="5.5"/>'});
+  s+='</g></svg>';
+  host.innerHTML=s;
+  var svg=host.querySelector('svg');
+  scDots=Array.prototype.slice.call(svg.querySelectorAll('.dot'));
+  function nearest(e){
+    var rc=svg.getBoundingClientRect(),k=W/rc.width,px=(e.clientX-rc.left)*k,py=(e.clientY-rc.top)*k,best=-1,bd=1e9;
+    scRows.forEach(function(r,i){var dx=x(r.matriculados)-px,dy=y(r.tasa_reprobacion_pct)-py,d=dx*dx+dy*dy;if(d<bd){bd=d;best=i}});
+    return bd<=18*18?best:-1;
+  }
+  svg.addEventListener('pointermove',function(e){
+    var i=nearest(e);setHL(-1);
+    if(i<0){hideTip();return}
+    var b=scRows[i],same=[];
+    scRows.forEach(function(r,j){if(Math.abs(x(r.matriculados)-x(b.matriculados))<7&&Math.abs(y(r.tasa_reprobacion_pct)-y(b.tasa_reprobacion_pct))<7)same.push(j)});
+    same.forEach(function(j){scDots[j].classList.add('on')});
+    var h='';
+    same.slice(0,3).forEach(function(j,n){var r=scRows[j];h+=(n?'<hr>':'')+'<span class="t">'+esc(tc(r.materia))+'</span><span class="m">'+esc(tc(r.programa))+' · '+esc(cn(r.campus))+' · Grupo '+esc(r.grupo)+'</span>Reprobación <b>'+fmtP(r.tasa_reprobacion_pct,1)+'</b> · '+r.reprobados+' de '+r.matriculados+' matriculados'});
+    if(same.length>3)h+='<hr><span class="m">y '+(same.length-3)+' cursos más con el mismo valor</span>';
+    showTip(h,e.clientX,e.clientY);
+  });
+  svg.addEventListener('pointerleave',function(){hideTip();setHL(-1)});
+  enterPanel('p-scatter',function(){gsap.from(scDots,{opacity:0,duration:.5,ease:'power2.out',stagger:{amount:.5,from:'random'}})});
+}
+function setHL(i){scDots.forEach(function(d,j){d.classList.toggle('on',j===i)})}
+
+/* ---------- cursos: histograma ---------- */
+var BANDS=[[50,59.999,'50–59 %'],[60,69.999,'60–69 %'],[70,79.999,'70–79 %'],[80,89.999,'80–89 %'],[90,99.999,'90–99 %'],[100,100,'100 %']];
+function renderHist(){
+  var rows=CRIT.filter(inScope);
+  var cnt=BANDS.map(function(b){return rows.filter(function(r){return r.tasa_reprobacion_pct>=b[0]&&r.tasa_reprobacion_pct<=b[1]}).length});
+  var mx=Math.max.apply(null,cnt.concat([1]));
+  var h='<div class="hist">';
+  BANDS.forEach(function(b,i){
+    var mix=38+i*12;
+    h+='<button type="button" class="hcol" data-b="'+i+'" style="cursor:default"><span class="hv">'+cnt[i]+'</span><span class="hbox"><i class="hb" style="height:'+(cnt[i]/mx*100).toFixed(1)+'%;background:color-mix(in srgb,var(--risk) '+Math.min(100,mix)+'%,var(--surface))"></i></span></button>';
+  });
+  h+='</div><div class="hlab">'+BANDS.map(function(b){return '<span>'+b[2]+'</span>'}).join('')+'</div>';
+  $('hist').innerHTML=h;
+  $('hist').querySelectorAll('.hcol').forEach(function(el){
+    var i=+el.dataset.b;
+    bindTip(el,function(){return '<span class="t">Reprobación '+BANDS[i][2]+'</span><b>'+cnt[i]+'</b> cursos ('+fmtP(rows.length?cnt[i]/rows.length*100:0,1)+' de '+rows.length+' con detalle público)'});
+  });
+  enterPanel('p-hist',function(){gsap.from($('hist').querySelectorAll('.hb'),{scaleY:0,transformOrigin:'bottom',duration:.7,ease:'power3.out',stagger:.06})});
+}
+
+/* ---------- cursos: tabla ---------- */
+var COLS=[['materia','Curso',0],['programa','Programa',0],['campus','Campus',0],['matriculados','Matric.',1],['reprobados','Reprob.',1],['tasa_reprobacion_pct','Tasa',1],['promedio','Promedio',1]];
+function tblRows(){
+  var q=norm(S.q.trim()),rows=CRIT.filter(inScope);
+  if(q)rows=rows.filter(function(r){return norm(r.materia+' '+r.programa+' '+r.materia_codigo+' '+cn(r.campus)).indexOf(q)>=0});
+  var k=S.sk==='tasa'?'tasa_reprobacion_pct':S.sk,d=S.sd;
+  rows.sort(function(a,b){
+    var va=a[k],vb=b[k],c=typeof va==='string'?va.localeCompare(vb,'es'):va-vb;
+    return (c||b.matriculados-a.matriculados||a.materia.localeCompare(b.materia))*(c?d:1);
+  });
+  return rows;
+}
+function renderHead(){
+  $('thead').innerHTML=COLS.map(function(c){
+    var key=c[0]==='tasa_reprobacion_pct'?'tasa':c[0],act=S.sk===key;
+    return '<th class="'+(c[2]?'n':'')+'" scope="col" aria-sort="'+(act?(S.sd>0?'ascending':'descending'):'none')+'"><button type="button" data-k="'+key+'">'+c[1]+'<span class="arr" aria-hidden="true">'+(act?(S.sd>0?'▲':'▼'):'↕')+'</span></button></th>';
+  }).join('');
+}
+$('thead').addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  var k=b.dataset.k;
+  if(S.sk===k)S.sd=-S.sd;else{S.sk=k;S.sd=(k==='materia'||k==='programa'||k==='campus')?1:-1}
+  S.shown=15;renderHead();renderTable();
+});
+var hlRow=null;
+function renderTable(){
+  var rows=tblRows(),vis=rows.slice(0,S.shown),base=CRIT.filter(inScope);
+  var h='';
+  vis.forEach(function(r,i){
+    var gi=scRows.indexOf(r);
+    h+='<tr data-g="'+gi+'"><td><div class="cn">'+esc(tc(r.materia))+'</div><div class="code">'+esc(r.materia_codigo)+' · Grupo '+esc(r.grupo)+(r.plan_eval==='SIN DATO'?' · Plan sin dato':'')+'</div></td><td>'+esc(tc(r.programa))+'</td><td>'+esc(cn(r.campus))+'</td><td class="n">'+r.matriculados+'</td><td class="n">'+r.reprobados+'</td><td class="n"><span class="pill"><span class="pb"><i style="transform:scaleX('+(r.tasa_reprobacion_pct/100)+')"></i></span><b>'+fmtP(r.tasa_reprobacion_pct,1)+'</b></span></td><td class="n">'+fmtD(r.promedio,1)+'</td></tr>';
+  });
+  $('tbody').innerHTML=h||'<tr><td colspan="7" class="empty">Ningún curso coincide con la búsqueda.</td></tr>';
+  $('tblCount').textContent='Mostrando '+fmtN(vis.length)+' de '+fmtN(rows.length)+(rows.length!==base.length?' (filtrados de '+fmtN(base.length)+')':' cursos con detalle público');
+  var mb=$('tblMore'),rest=rows.length-vis.length;mb.hidden=rest<=0;mb.textContent='Mostrar '+Math.min(25,rest)+' más';
+  $('tbody').querySelectorAll('tr[data-g]').forEach(function(tr){
+    tr.addEventListener('pointerenter',function(){setHL(+tr.dataset.g)});
+    tr.addEventListener('pointerleave',function(){setHL(-1)});
+  });
+}
+$('tblMore').addEventListener('click',function(){S.shown+=25;renderTable()});
+var qT;
+$('q').addEventListener('input',function(e){clearTimeout(qT);qT=setTimeout(function(){S.q=e.target.value;S.shown=15;renderTable()},120)});
+
+function renderCoursesHead(){
+  var rows=CRIT.filter(inScope),n100=rows.filter(function(r){return r.tasa_reprobacion_pct===100}).length;
+  $('h-cur').textContent=fmtN(rows.length)+' cursos con detalle público'+(n100?'; '+fmtN(n100)+(n100===1?' reprobó':' reprobaron')+' a todos sus matriculados':'');
+}
+
+/* ---------- calidad ---------- */
+function renderQuality(){
+  $('h-cal').textContent='Cobertura de P1 del '+fmtP(QUA.p1_coverage_pct,0)+' sobre '+fmtN(QUA.student_rows)+' registros de estudiantes';
+  var cov=[['P1',QUA.p1_coverage_pct],['P2',QUA.p2_coverage_pct],['P3',QUA.p3_coverage_pct],['Acumulado',QUA.accumulated_coverage_pct]];
+  $('cov').innerHTML=cov.map(function(c){return '<div class="cr"><span>'+c[0]+'</span><span class="ct"><i style="transform:scaleX('+(c[1]/100)+')"></i></span><b>'+fmtP(c[1],0)+'</b></div>'}).join('')+
+    '<p class="sub" style="margin-top:2px">P2 y P3 no tienen notas cargadas en este corte, por eso el informe solo reporta P1.</p>';
+  var T=function(v,z){return z?(v===0?'<span class="tag ok">Sin hallazgos</span>':'<span class="tag rev">Revisar</span>'):''};
+  var items=[
+    ['Registros de estudiante',fmtN(QUA.student_rows),''],
+    ['Estudiantes únicos',fmtN(QUA.unique_students),''],
+    ['Grupos (cursos)',fmtN(QUA.group_rows),''],
+    ['Registros sin nota P1',fmtN(QUA.p1_missing_rows),T(QUA.p1_missing_rows,1)],
+    ['Registros P1 inválidos',fmtN(QUA.invalid_p1_rows),T(QUA.invalid_p1_rows,1)],
+    ['Filas exactamente duplicadas',fmtN(QUA.exact_duplicate_rows),T(QUA.exact_duplicate_rows,1)],
+    ['Filas con grano duplicado',fmtN(QUA.duplicate_grain_rows),T(QUA.duplicate_grain_rows,1)],
+    ['Grupos con fórmula que no cuadra',fmtN(QUA.group_formula_mismatch_rows),T(QUA.group_formula_mismatch_rows,1)],
+    ['Grupos sin matrícula',fmtN(QUA.groups_with_zero_enrollment),T(QUA.groups_with_zero_enrollment,1)],
+    ['Grupos con menos de 5 matriculados',fmtN(QUA.groups_below_5),'<span class="tag inf">Suprimidos</span>'],
+    ['Cursos críticos: total / públicos / suprimidos',fmtN(QUA.critical_groups_total)+' / '+fmtN(QUA.critical_groups_public)+' / '+fmtN(QUA.critical_groups_suppressed_lt5),'']
+  ];
+  $('checks').innerHTML=items.map(function(i){return '<dt>'+i[0]+'</dt><dd>'+i[2]+'<span>'+i[1]+'</span></dd>'}).join('');
+  enterPanel('p-cov',function(){gsap.from($('cov').querySelectorAll('.ct i'),{scaleX:0,transformOrigin:'left',duration:.8,ease:'power3.out',stagger:.08})});
+}
+
+/* ---------- alcance ---------- */
+function renderFlow(){
+  $('flow').innerHTML=FLOW.map(function(f){return '<div class="panel"><h3>'+esc(f.title)+'</h3><p>'+esc(f.detail)+'</p></div>'}).join('');
+  $('files').innerHTML='Fuentes: '+esc(SRC)+'. '+FILES.map(function(f){return '<code>'+esc(f)+'</code>'}).join(' ');
+  var tp=D.title.split(' - ');$('title').innerHTML=esc(tp[0])+(tp[1]?'<span style="display:block;font-size:.55em;font-weight:500;color:var(--ink2);margin-top:8px;line-height:1.2">'+esc(tp[1].replace('50%','50'+NB+'%'))+'</span>':'');
+  $('question').textContent=D.report.originalQuestion;
+  $('asof').textContent=fdate(D.report.asOf);
+  $('noticeText').textContent='Resultados del periodo 2026-2 al corte P1.';
+  $('foot').textContent='Universidad de Santander · '+D.title+' · Periodo 2026-2, corte P1 · '+fdate(D.report.asOf)+'. No incluye nombres ni identificadores estudiantiles.';
+}
+
+function renderAll(animateChange){
+  renderKPIs();renderCampus();renderPrograms();renderCoursesHead();drawScatter();renderHist();renderTable();
+}
+
+/* ---------- tema ---------- */
+$('theme').addEventListener('click',function(){
+  var r=document.documentElement,cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  var nx=cur==='dark'?'light':'dark';r.setAttribute('data-theme',nx);
+  try{localStorage.setItem('udes-portal-theme',nx)}catch(e){}
+});
+try{var st=localStorage.getItem('udes-portal-theme');if(st==='dark'||st==='light')document.documentElement.setAttribute('data-theme',st)}catch(e){}
+
+/* ---------- init ---------- */
+renderFlow();renderChips();renderQuality();renderAll();
+var rt;
+if(window.ResizeObserver){var lastW=$('scatter').clientWidth;new ResizeObserver(function(en){var w=Math.round(en[0].contentRect.width);if(w===lastW)return;lastW=w;clearTimeout(rt);rt=setTimeout(drawScatter,120)}).observe($('scatter'))}
+
+/* ---------- GSAP: animación con respeto a reduced motion ---------- */
+if(window.gsap&&window.ScrollTrigger){
+  gsap.registerPlugin(ScrollTrigger);
+  var mm=gsap.matchMedia();
+  mm.add('(prefers-reduced-motion: no-preference)',function(){
+    motionOK=true;
+    gsap.from('.hero .eyebrow,.hero h1,.hero .question,.hero .notice',{opacity:0,y:10,duration:.6,ease:'power3.out',stagger:.07});
+    gsap.from('.kpi',{opacity:0,y:12,duration:.5,ease:'power3.out',stagger:.06,delay:.15,clearProps:'opacity,transform'});
+    var ids=['kpis','p-camp-rate','p-camp-ge','p-prog','p-scatter','p-hist','p-cov'];
+    ids.forEach(function(id){
+      ScrollTrigger.create({trigger:$(id),start:'top 88%',once:true,onEnter:function(){
+        panelsEntered[id]=true;
+        if(id==='kpis'){['k-tasa','k-rep','k-ge','k-prog','k-pub'].forEach(function(k){var e=$(k);e._v=0;e._intro=true;tweenNum(e,e._target,e._fmt,true);e._intro=false})}
+        else if($(id)._anim)$(id)._anim();
+      }});
+    });
+    gsap.utils.toArray('.sechead').forEach(function(el){
+      gsap.from(el,{opacity:0,y:10,duration:.5,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 92%',once:true},clearProps:'opacity,transform'});
+    });
+    return function(){motionOK=false};
+  });
+  mm.add('(prefers-reduced-motion: reduce)',function(){motionOK=false});
+}
+})();
+</script>

@@ -1,0 +1,654 @@
+<title>Mapa de Riesgo Académico 2026-2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Concepto: diapositivas 16:9 diseñadas en un lienzo fijo (1280x720; 640xN en vertical) que se escala al viewport.
+   Un solo color de alerta (granate) = "reprobación >= 50 %"; un solo azul petróleo = volumen/tasa. Todo lo demás es tinta neutra. */
+:root{
+  --bg:#F3F5F7; --bg-outer:#E4E9ED; --surface:#FFFFFF; --ink:#0F1D27; --ink-2:#465662; --line:#CFD7DD; --track:#E3E8EC;
+  --data:#1E6E8C; --alert:#B3261E; --alert-soft:#F3D6D2; --warn:#84550A; --ok:#1B6A48; --dot:#B7C2CA;
+  --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --f-body:'Instrument Sans','Segoe UI',system-ui,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  --ease:cubic-bezier(.23,1,.32,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1519; --bg-outer:#070C0F; --surface:#15212A; --ink:#E9EFF3; --ink-2:#9DAEBA; --line:#2A3B47; --track:#1F2E38;
+    --data:#67B6D1; --alert:#FF8172; --alert-soft:#4A2622; --warn:#E3B341; --ok:#5CC796; --dot:#33444F;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1519; --bg-outer:#070C0F; --surface:#15212A; --ink:#E9EFF3; --ink-2:#9DAEBA; --line:#2A3B47; --track:#1F2E38;
+  --data:#67B6D1; --alert:#FF8172; --alert-soft:#4A2622; --warn:#E3B341; --ok:#5CC796; --dot:#33444F;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg-outer);color:var(--ink);font:400 16px/1.4 var(--f-body);overflow:hidden;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--data);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+#main{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg-outer)}
+#viewport{position:absolute;inset:0;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+#stage{position:absolute;left:0;top:0;transform-origin:0 0;background:var(--bg);overflow:hidden}
+#progress{position:absolute;top:env(safe-area-inset-top,0px);left:0;right:0;height:3px;background:transparent;z-index:5;pointer-events:none}
+#progress i{display:block;height:100%;background:var(--alert);transform-origin:0 50%;transform:scaleX(.09)}
+
+/* ---------- Slide base (px del lienzo) ---------- */
+.slide{position:absolute;inset:0;padding:44px 72px 72px;display:flex;flex-direction:column;gap:18px;visibility:hidden;opacity:0;overflow:hidden}
+.kicker{margin:0;font:500 15px/1.2 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance}
+.hd{display:flex;flex-direction:column;gap:12px}
+.hd h2{font-weight:700;font-size:40px;line-height:1.08;letter-spacing:-.02em;max-width:32ch}
+.sub{margin:0;font-size:20px;line-height:1.35;color:var(--ink-2);max-width:62ch}
+.bd{flex:1;min-height:0;display:grid}
+.num{font-family:var(--f-display);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1}
+.mono{font-family:var(--f-mono)}
+.al{color:var(--alert)} .dt{color:var(--data)}
+.lab{font:500 14px/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.note{margin:0;font-size:18px;line-height:1.4;color:var(--ink-2);max-width:70ch}
+.note b{color:var(--ink);font-weight:600}
+.track{position:relative;background:var(--track);border-radius:0 5px 5px 0;height:26px;overflow:hidden}
+.fill{position:absolute;left:0;top:0;bottom:0;background:var(--data);border-radius:0 5px 5px 0}
+.fill.a{background:var(--alert)}
+
+/* Portada */
+.s-cover{padding:64px 80px 84px}
+.cover{flex:1;display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:32px}
+.cv-left{display:flex;flex-direction:column;gap:22px}
+.cover h1{font-weight:700;font-size:76px;line-height:.98;letter-spacing:-.035em}
+.cv-sub{margin:0;font-size:26px;line-height:1.3;color:var(--ink-2);max-width:26ch}
+.badge{align-self:flex-start;margin:6px 0 0;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font:500 14px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
+.cv-mark{display:flex;align-items:baseline;justify-content:flex-end;color:var(--alert);font-family:var(--f-display);font-weight:800;line-height:.8;letter-spacing:-.05em;white-space:nowrap}
+.cv-mark .ge{font-size:150px;opacity:.55;margin-right:6px}
+.cv-mark .n{font-size:300px;font-variant-numeric:tabular-nums}
+.cv-mark .pc{font-size:120px;margin-left:8px}
+.cv-foot{position:absolute;left:80px;right:80px;bottom:44px;display:flex;gap:28px;flex-wrap:wrap;font:500 14px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+
+/* Mensaje clave */
+.s-key .bd{grid-template-columns:1.25fr 1fr;gap:44px}
+.dotcol{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:12px;min-height:0}
+.dotwrap{position:relative;min-height:0}
+.dotwrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.legend{margin:0;display:flex;gap:22px;flex-wrap:wrap;font-size:16px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{width:12px;height:12px;border-radius:50%;background:var(--dot);display:inline-block}
+.sw.h{background:var(--alert)}
+.keycol{display:flex;flex-direction:column;justify-content:center;gap:28px}
+.keybig{display:flex;flex-direction:column;gap:8px}
+.keybig .num{font-size:150px;color:var(--alert)}
+.keybig p{margin:0;font-size:22px;line-height:1.3}
+.why{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:8px}
+.why p{margin:0;font-size:19px;line-height:1.4;color:var(--ink-2)}
+
+/* Indicadores */
+.s-kpi .bd{grid-template-columns:.9fr 1.1fr;gap:40px;align-items:center}
+.donutwrap{position:relative;width:340px;height:340px;justify-self:center}
+.donutwrap svg{width:100%;height:100%;display:block;transform:rotate(-90deg)}
+.donutwrap circle{fill:none;stroke-width:16}
+.donutwrap .tr{stroke:var(--track)} .donutwrap .vl{stroke:var(--alert);stroke-linecap:butt}
+.dcenter{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
+.dcenter .num{font-size:64px}
+.dcenter span{font-size:16px;color:var(--ink-2);max-width:14ch;line-height:1.25}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 24px;display:flex;flex-direction:column;gap:10px}
+.tile .num{font-size:54px}
+.tile span{font-size:17px;color:var(--ink-2);line-height:1.25}
+.tile.hot .num{color:var(--alert)}
+
+/* Filas de barras (campus / programas / cursos) */
+.rows{display:flex;flex-direction:column;gap:14px;align-self:start}
+.rowhead,.crow{display:grid;grid-template-columns:190px 1fr 1fr;column-gap:36px;align-items:center}
+.rowhead{padding-bottom:4px;border-bottom:1px solid var(--line)}
+.crow .nm{display:flex;flex-direction:column;gap:2px;font-family:var(--f-display);font-weight:600;font-size:26px;letter-spacing:-.01em}
+.crow .nm small{font:400 15px/1.2 var(--f-body);color:var(--ink-2);letter-spacing:0}
+.bcell{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px}
+.bcell .v{font-family:var(--f-display);font-weight:700;font-size:30px;font-variant-numeric:tabular-nums;min-width:3.4ch;text-align:right}
+.crow .track{height:32px}
+
+.prow{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr) 46px 86px;column-gap:22px;align-items:center;min-height:30px}
+.prow.ph{border-bottom:1px solid var(--line);min-height:0;padding-bottom:6px}
+.prow .pn{font-size:18px;font-weight:600;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .pn small{margin-left:8px;font:400 14px/1.2 var(--f-body);color:var(--ink-2)}
+.portrait .prow .pn{white-space:normal}
+.prow .track{height:20px}
+.prow .cnt{font-family:var(--f-display);font-weight:700;font-size:26px;text-align:right;font-variant-numeric:tabular-nums}
+.prow .rt{font:500 16px/1 var(--f-mono);text-align:right;color:var(--ink-2)}
+.prow.ph span{font:500 13px/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.prow.ph .r{text-align:right}
+
+/* Dispersión */
+.s-sc .bd{grid-template-columns:1.6fr 1fr;gap:40px}
+.plotbox{position:relative;min-height:0;padding:6px 14px 46px 64px}
+.plot{position:relative;width:100%;height:100%;border-left:1px solid var(--ink-2);border-bottom:1px solid var(--ink-2)}
+.gl{position:absolute;left:0;right:0;height:0;border-top:1px solid var(--line)}
+.gl i,.tx{position:absolute;font:400 13px/1 var(--f-mono);color:var(--ink-2)}
+.gl i{right:calc(100% + 10px);top:-7px;font-style:normal}
+.tx{top:calc(100% + 10px);transform:translateX(-50%)}
+.ax{position:absolute;font:500 13px/1.2 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.ax.x{left:64px;right:14px;bottom:0;text-align:center}
+.ax.y{left:0;top:6px;bottom:46px;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;white-space:nowrap}
+.pt{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:var(--data);opacity:.85;box-shadow:0 0 0 2px var(--bg);cursor:default}
+.pt:hover,.pt:focus-visible{opacity:1;outline:2px solid var(--ink);outline-offset:2px}
+.plab{position:absolute;font:500 14px/1.1 var(--f-body);color:var(--ink);white-space:nowrap;pointer-events:none}
+.plab.l{transform:translate(-100%,-50%);margin-left:-14px} .plab.r{transform:translate(0,-50%);margin-left:14px}
+.calls{display:flex;flex-direction:column;justify-content:center;gap:26px}
+.call{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:14px}
+.call .num{font-size:52px}
+.call p{margin:0;font-size:18px;line-height:1.35;color:var(--ink-2)}
+.call p b{color:var(--ink)}
+
+/* Histograma */
+.s-hist .bd{grid-template-columns:1.6fr 1fr;gap:44px}
+.hist{display:grid;grid-template-columns:repeat(5,1fr);column-gap:18px;min-height:0;padding-bottom:0}
+.hcol{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:10px;min-height:0}
+.harea{position:relative;border-bottom:1px solid var(--ink-2)}
+.hbar{position:absolute;left:0;right:0;bottom:0;border-radius:5px 5px 0 0;background:var(--alert)}
+.hn{position:absolute;left:0;right:0;text-align:center;font-family:var(--f-display);font-weight:700;font-size:30px;font-variant-numeric:tabular-nums}
+.hl{text-align:center;font:500 15px/1.2 var(--f-mono);color:var(--ink-2)}
+
+/* Cursos críticos */
+.crs{display:flex;flex-direction:column;gap:8px;align-self:start}
+.cr{display:grid;grid-template-columns:132px minmax(0,1fr) 190px;column-gap:20px;align-items:center;min-height:50px}
+.cr .rate{font-family:var(--f-display);font-weight:700;font-size:36px;color:var(--alert);font-variant-numeric:tabular-nums;text-align:right;letter-spacing:-.02em;white-space:nowrap}
+.cr .cm{min-width:0;display:flex;flex-direction:column;gap:4px}
+.cr .cn{font-weight:600;font-size:19px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr .cmeta{font-size:14px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr .track{height:6px;border-radius:0 3px 3px 0;margin-top:2px}
+.cr .fill{border-radius:0 3px 3px 0}
+.cr .cs{white-space:nowrap;font:500 14px/1.3 var(--f-mono);color:var(--ink-2);text-align:right}
+.cr .cs b{color:var(--ink);font-weight:500}
+
+/* Calidad */
+.s-q .bd{grid-template-rows:auto 1fr;gap:26px}
+.cov{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.cv{display:flex;flex-direction:column;gap:8px}
+.cv .top{display:flex;justify-content:space-between;align-items:baseline}
+.cv .top .num{font-size:42px}
+.cv .track{height:14px}
+.cv small{font-size:15px;color:var(--ink-2)}
+.checks{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:14px}
+.chk{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;display:flex;flex-direction:column;gap:8px;justify-content:space-between}
+.chk .num{font-size:40px}
+.chk span.d{font-size:16px;line-height:1.3;color:var(--ink-2)}
+.st{align-self:flex-start;font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:999px;border:1px solid currentColor}
+.st.ok{color:var(--ok)} .st.wr{color:var(--warn)} .st.in{color:var(--data)}
+
+/* Alcance */
+.s-scope .bd{grid-template-columns:repeat(3,1fr);gap:26px;align-items:stretch}
+.sc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px 28px 26px;display:flex;flex-direction:column;gap:16px}
+.sc svg{width:44px;height:44px;stroke:var(--data);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.sc h3{margin:0;font:700 30px/1.1 var(--f-display);letter-spacing:-.01em}
+.sc p{margin:0;font-size:20px;line-height:1.4;color:var(--ink-2)}
+.files{display:flex;gap:10px;flex-wrap:wrap;margin-top:2px}
+.files span{font:400 13px/1 var(--f-mono);padding:6px 10px;border:1px solid var(--line);border-radius:6px;color:var(--ink-2);background:var(--surface)}
+
+/* Cierre */
+.s-end .bd{grid-template-columns:1fr 1fr;gap:34px;align-items:start}
+.col h3{margin:0 0 14px;font:500 14px/1.2 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);padding-bottom:10px;border-bottom:1px solid var(--line)}
+.col.sug h3{color:var(--warn)}
+.col ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.col li{font-size:20px;line-height:1.35}
+.col li b{font-weight:600}
+.col li small{display:block;margin-top:4px;font-size:15px;color:var(--ink-2)}
+
+/* ---------- Portrait: mismo contenido, reacomodado ---------- */
+.portrait .slide{padding:38px 34px 84px;gap:16px}
+.portrait .hd h2{font-size:31px;max-width:none}
+.portrait .sub{font-size:17px}
+.portrait .kicker{font-size:13px}
+.portrait .s-cover{padding:56px 34px 96px}
+.portrait .cover{grid-template-columns:1fr;grid-template-rows:auto auto;align-content:center;gap:40px}
+.portrait .cover h1{font-size:60px}
+.portrait .cv-sub{font-size:23px;max-width:none}
+.portrait .cv-mark{justify-content:flex-start}
+.portrait .cv-mark .ge{font-size:100px} .portrait .cv-mark .n{font-size:200px} .portrait .cv-mark .pc{font-size:80px}
+.portrait .cv-foot{left:34px;right:34px;bottom:56px;font-size:12px;gap:16px}
+.portrait .s-key .bd{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;gap:22px}
+.portrait .keybig .num{font-size:100px}
+.portrait .keybig p{font-size:19px}
+.portrait .keycol{gap:16px}
+.portrait .s-kpi .bd{grid-template-columns:1fr;gap:24px;align-content:start}
+.portrait .donutwrap{width:280px;height:280px}
+.portrait .dcenter .num{font-size:54px}
+.portrait .tile{padding:14px 16px}.portrait .tile .num{font-size:38px}.portrait .tile span{font-size:15px}
+.portrait .rowhead{display:none}
+.portrait .crow{grid-template-columns:1fr;row-gap:8px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.portrait .crow .nm{flex-direction:row;align-items:baseline;gap:12px}
+.portrait .bcell{grid-template-columns:120px 1fr auto}
+.portrait .bcell::before{content:attr(data-l);font:500 12px/1.1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);order:-1}
+.portrait .prow{grid-template-columns:minmax(0,1fr) 40px 70px;grid-template-areas:"n c r" "t t t";row-gap:6px}
+.portrait .prow .pn{grid-area:n;font-size:17px}.portrait .prow .track{grid-area:t;height:12px}.portrait .prow .cnt{grid-area:c}.portrait .prow .rt{grid-area:r}
+.portrait .prow.ph{display:none}
+.portrait .s-sc .bd{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;gap:18px}
+.portrait .calls{flex-direction:row;gap:18px}.portrait .call{flex:1}.portrait .call .num{font-size:38px}.portrait .call p{font-size:15px}
+.portrait .plotbox{padding-left:52px}.portrait .ax.x{left:52px}
+.portrait .s-hist .bd{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;gap:20px}
+.portrait .hn{font-size:24px}.portrait .hl{font-size:12px}
+.portrait .cr{grid-template-columns:100px minmax(0,1fr);row-gap:0;column-gap:14px;min-height:0;padding-bottom:6px}
+.portrait .cr .rate{font-size:26px}.portrait .cr .cs{display:none}
+.portrait .crs{gap:12px}
+.portrait .cr .cn{white-space:normal}
+.portrait .cov{grid-template-columns:1fr;gap:12px}
+.portrait .cv .top .num{font-size:32px}
+.portrait .checks{grid-template-columns:1fr 1fr;gap:10px}.portrait .chk{padding:12px 14px}.portrait .chk .num{font-size:30px}.portrait .chk span.d{font-size:13.5px}
+.portrait .s-q .bd{grid-template-rows:auto auto;align-content:start}
+.portrait .s-scope .bd{grid-template-columns:1fr;gap:14px;align-content:start}
+.portrait .sc{padding:18px 20px;gap:10px}.portrait .sc h3{font-size:24px}.portrait .sc p{font-size:16px}.portrait .sc svg{width:34px;height:34px}
+.portrait .s-end .bd{grid-template-columns:1fr;gap:22px}
+.portrait .col li{font-size:17px}
+
+/* ---------- Cromo de la app (px reales) ---------- */
+#chrome{position:absolute;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;background:color-mix(in srgb,var(--surface) 86%,transparent);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);border:1px solid var(--line);box-shadow:0 6px 24px rgb(0 0 0/.12);transition:opacity .3s var(--ease)}
+#chrome.idle{opacity:0;pointer-events:none}
+#chrome button{width:40px;height:40px;border:0;background:transparent;border-radius:50%;display:grid;place-items:center;color:var(--ink);transition:background-color .15s,transform .12s var(--ease)}
+#chrome button:active{transform:scale(.94)}
+@media (hover:hover) and (pointer:fine){#chrome button:hover{background:var(--track)}}
+#chrome svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#count{min-width:64px;text-align:center;font:500 14px/1 var(--f-mono);font-variant-numeric:tabular-nums;padding:0 6px}
+#chrome .sep{width:1px;height:20px;background:var(--line);margin:0 4px}
+#toast{position:absolute;left:50%;bottom:calc(70px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:7;padding:9px 14px;border-radius:8px;background:var(--ink);color:var(--bg);font:500 14px/1.3 var(--f-body);opacity:0;visibility:hidden;max-width:calc(100% - 32px);text-align:center}
+
+#notes{position:fixed;left:0;right:0;bottom:0;height:0;z-index:8;background:var(--surface);border-top:1px solid var(--line);overflow:hidden;visibility:hidden}
+#notes .in{height:100%;padding:14px max(20px,env(safe-area-inset-left,0px)) calc(14px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:1fr 240px;gap:24px;overflow:auto}
+#notes p{margin:0;font-size:16px;line-height:1.5;max-width:90ch}
+#notes .side{display:flex;flex-direction:column;gap:6px;border-left:1px solid var(--line);padding-left:20px}
+#notes .side b{font:500 24px/1 var(--f-mono);font-variant-numeric:tabular-nums}
+#notes .side span{font-size:14px;color:var(--ink-2)}
+@media (max-width:640px){#notes .in{grid-template-columns:1fr}#notes .side{border:0;padding:0;flex-direction:row;gap:14px;align-items:baseline;flex-wrap:wrap}}
+
+#overview{position:fixed;inset:0;z-index:9;background:var(--bg-outer);visibility:hidden;opacity:0;overflow:auto;padding:max(16px,env(safe-area-inset-top,0px)) 20px 28px}
+#overview .oh{max-width:1240px;margin:8px auto 18px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+#overview .oh h2{font:700 24px/1.1 var(--f-display)}
+#overview .oh button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-size:14px}
+.cards{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.card{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;min-height:168px;aspect-ratio:16/9}
+.cards.stack .card{grid-area:1/1}
+.card .n{font:500 13px/1 var(--f-mono);color:var(--ink-2)}
+.card .k{font:500 12px/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.card .t{font:600 16px/1.2 var(--f-display);flex:1}
+.card .f{font:700 26px/1 var(--f-display);font-variant-numeric:tabular-nums;color:var(--data)}
+.card[aria-current="true"]{outline:2px solid var(--alert);outline-offset:0}
+@media (hover:hover) and (pointer:fine){.card:hover{border-color:var(--ink-2)}}
+
+/* ---------- Impresión: una diapositiva por página ---------- */
+@page{size:1280px 720px;margin:0}
+@media print{
+  :root:root:root{--bg:#F3F5F7;--bg-outer:#F3F5F7;--surface:#FFFFFF;--ink:#0F1D27;--ink-2:#465662;--line:#CFD7DD;--track:#E3E8EC;--data:#1E6E8C;--alert:#B3261E;--alert-soft:#F3D6D2;--warn:#84550A;--ok:#1B6A48;--dot:#B7C2CA;color-scheme:light}
+  html,body{height:auto!important;overflow:visible!important;background:#fff!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #main{position:static!important;background:none!important}
+  #viewport{position:static!important;overflow:visible!important}
+  #stage{position:static!important;transform:none!important;width:auto!important;height:auto!important;overflow:visible!important;background:none!important}
+  .slide{position:relative!important;inset:auto!important;visibility:visible!important;opacity:1!important;transform:none!important;width:1280px!important;height:720px!important;break-after:page;break-inside:avoid;background:var(--bg)}
+  .slide:last-child{break-after:auto}
+  #chrome,#progress,#toast,#notes,#overview{display:none!important}
+}
+</style>
+
+<div id="main">
+  <div id="viewport" tabindex="-1"><div id="stage"></div></div>
+  <div id="progress" aria-hidden="true"><i></i></div>
+  <nav id="chrome" aria-label="Controles de la presentación">
+    <button id="bPrev" type="button" aria-label="Diapositiva anterior" title="Anterior (←)"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <span id="count" aria-hidden="true">1 / 1</span>
+    <button id="bNext" type="button" aria-label="Diapositiva siguiente" title="Siguiente (→ o espacio)"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    <span class="sep" aria-hidden="true"></span>
+    <button id="bOv" type="button" aria-label="Índice de diapositivas" title="Índice (O)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1"/></svg></button>
+    <button id="bNotes" type="button" aria-label="Notas del presentador" aria-pressed="false" title="Notas (N)"><svg viewBox="0 0 24 24"><path d="M5 4h14v12H9l-4 4z"/><path d="M9 8h6M9 12h4"/></svg></button>
+    <button id="bFs" type="button" aria-label="Pantalla completa" title="Pantalla completa (F)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button id="bTheme" type="button" aria-label="Cambiar tema claro u oscuro" title="Tema (T)"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+  </nav>
+  <div id="toast" role="status"></div>
+</div>
+<aside id="notes" aria-label="Notas del presentador"><div class="in"><p id="noteText"></p><div class="side"><b id="timer">00:00</b><span id="nextUp"></span></div></div></aside>
+<div id="overview" role="dialog" aria-modal="true" aria-label="Índice de diapositivas">
+  <div class="oh"><h2>Índice de diapositivas</h2><button type="button" id="ovClose">Cerrar (Esc)</button></div>
+  <div class="cards" id="cards"></div>
+</div>
+<div class="sr" aria-live="polite" id="live"></div>
+
+<script type="application/json" id="data">{"id":"udes-mapa-riesgo-2026-2-p1-v2","title":"Mapa de Riesgo Académico - Cursos con Reprobación ≥ 50%","surface":"report","status":"reviewed","buildStatus":"complete","generatedAt":"2026-09-29T00:00:00-05:00","filters":[],"report":{"asOf":"2026-09-29","originalQuestion":"¿Qué cursos presentan reprobación de 50 % o más y en cuáles campus y programas se concentran?"},"queries":{"institutional":{"label":"Indicadores institucionales P1","rows":[{"matriculados_curso":54937,"reprobados":6010,"tasa_reprobacion_pct":10.94,"cursos":3027,"cursos_ge_50":123,"programas_con_curso_ge_50":35,"campus_con_curso_ge_50":4}],"source":{"label":"Bases académicas UDES 2026-2, corte P1","files":["2026-2_P1P2P3_Estudiante.xlsx","2026-2_P1P2P3_grupos.xlsx"],"evidenceFlow":[{"title":"Alcance","detail":"Resultados del periodo 2026-2 al corte P1. Son alertas tempranas y no resultados definitivos."},{"title":"Privacidad","detail":"El informe excluye nombres e identificadores estudiantiles y suprime el detalle de cursos con menos de cinco matriculados."},{"title":"Cálculo","detail":"Reprobación P1: nota inferior a 3,0. Tasa del curso: reprobados / matriculados, según la base consolidada de grupos."}]}},"campus":{"label":"Reprobación y cursos priorizados por campus","rows":[{"campus":"BOGOTA","cursos":62,"matriculados_curso":1175,"reprobados":158,"cursos_ge_50":5,"tasa_reprobacion_pct":13.45},{"campus":"BUCARAMANGA","cursos":1363,"matriculados_curso":21625,"reprobados":2584,"cursos_ge_50":64,"tasa_reprobacion_pct":11.95},{"campus":"CUCUTA","cursos":880,"matriculados_curso":18077,"reprobados":1516,"cursos_ge_50":21,"tasa_reprobacion_pct":8.39},{"campus":"VALLEDUPAR","cursos":722,"matriculados_curso":14060,"reprobados":1752,"cursos_ge_50":33,"tasa_reprobacion_pct":12.46}],"source":{"label":"Bases académicas UDES 2026-2, corte P1","files":["2026-2_P1P2P3_Estudiante.xlsx","2026-2_P1P2P3_grupos.xlsx"],"evidenceFlow":[{"title":"Alcance","detail":"Resultados del periodo 2026-2 al corte P1. Son alertas tempranas y no resultados definitivos."},{"title":"Privacidad","detail":"El informe excluye nombres e identificadores estudiantiles y suprime el detalle de cursos con menos de cinco matriculados."},{"title":"Cálculo","detail":"Reprobación P1: nota inferior a 3,0. Tasa del curso: reprobados / matriculados, según la base consolidada de grupos."}]}},"programs":{"label":"Programas por concentración de cursos priorizados","rows":[{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","cursos":84,"matriculados_curso":1710,"reprobados":374,"cursos_ge_50":13,"tasa_reprobacion_pct":21.87},{"campus":"BUCARAMANGA","programa":"Matemáticas","cursos":59,"matriculados_curso":1342,"reprobados":437,"cursos_ge_50":12,"tasa_reprobacion_pct":32.56},{"campus":"BUCARAMANGA","programa":"Idiomas","cursos":193,"matriculados_curso":2527,"reprobados":272,"cursos_ge_50":10,"tasa_reprobacion_pct":10.76},{"campus":"VALLEDUPAR","programa":"Medicina veterinaria y zootecnia","cursos":55,"matriculados_curso":1082,"reprobados":244,"cursos_ge_50":8,"tasa_reprobacion_pct":22.55},{"campus":"CUCUTA","programa":"Ingeniería de sistemas","cursos":55,"matriculados_curso":1089,"reprobados":207,"cursos_ge_50":6,"tasa_reprobacion_pct":19.01},{"campus":"BUCARAMANGA","programa":"Tecnología en comunicación gráfica","cursos":52,"matriculados_curso":657,"reprobados":107,"cursos_ge_50":6,"tasa_reprobacion_pct":16.29},{"campus":"VALLEDUPAR","programa":"Bacteriología y laboratorio clínico","cursos":32,"matriculados_curso":801,"reprobados":152,"cursos_ge_50":5,"tasa_reprobacion_pct":18.98},{"campus":"BUCARAMANGA","programa":"Morfofisiología","cursos":20,"matriculados_curso":385,"reprobados":147,"cursos_ge_50":5,"tasa_reprobacion_pct":38.18},{"campus":"BUCARAMANGA","programa":"Fisioterapia","cursos":37,"matriculados_curso":789,"reprobados":143,"cursos_ge_50":5,"tasa_reprobacion_pct":18.12},{"campus":"BOGOTA","programa":"Instrumentación quirúrgica","cursos":43,"matriculados_curso":912,"reprobados":126,"cursos_ge_50":5,"tasa_reprobacion_pct":13.82},{"campus":"VALLEDUPAR","programa":"Ciencias básicas","cursos":30,"matriculados_curso":572,"reprobados":115,"cursos_ge_50":4,"tasa_reprobacion_pct":20.1},{"campus":"CUCUTA","programa":"Ciencias básicas ingenierías","cursos":25,"matriculados_curso":509,"reprobados":97,"cursos_ge_50":4,"tasa_reprobacion_pct":19.06},{"campus":"VALLEDUPAR","programa":"Derecho","cursos":89,"matriculados_curso":1814,"reprobados":238,"cursos_ge_50":3,"tasa_reprobacion_pct":13.12},{"campus":"VALLEDUPAR","programa":"Medicina","cursos":23,"matriculados_curso":532,"reprobados":100,"cursos_ge_50":3,"tasa_reprobacion_pct":18.8},{"campus":"BUCARAMANGA","programa":"Ingeniería industrial","cursos":36,"matriculados_curso":276,"reprobados":28,"cursos_ge_50":3,"tasa_reprobacion_pct":10.14},{"campus":"BUCARAMANGA","programa":"Ciencias básicas","cursos":42,"matriculados_curso":964,"reprobados":223,"cursos_ge_50":2,"tasa_reprobacion_pct":23.13},{"campus":"VALLEDUPAR","programa":"Sociohumanidades","cursos":66,"matriculados_curso":1604,"reprobados":203,"cursos_ge_50":2,"tasa_reprobacion_pct":12.66},{"campus":"BUCARAMANGA","programa":"Bacteriología y laboratorio clínico","cursos":25,"matriculados_curso":663,"reprobados":126,"cursos_ge_50":2,"tasa_reprobacion_pct":19},{"campus":"VALLEDUPAR","programa":"Ingeniería industrial","cursos":33,"matriculados_curso":631,"reprobados":102,"cursos_ge_50":2,"tasa_reprobacion_pct":16.16},{"campus":"CUCUTA","programa":"Diseño gráfico","cursos":43,"matriculados_curso":591,"reprobados":97,"cursos_ge_50":2,"tasa_reprobacion_pct":16.41},{"campus":"CUCUTA","programa":"Administración financiera","cursos":46,"matriculados_curso":955,"reprobados":95,"cursos_ge_50":2,"tasa_reprobacion_pct":9.95},{"campus":"BUCARAMANGA","programa":"Psicología","cursos":51,"matriculados_curso":728,"reprobados":71,"cursos_ge_50":2,"tasa_reprobacion_pct":9.75},{"campus":"CUCUTA","programa":"Enfermería","cursos":22,"matriculados_curso":499,"reprobados":46,"cursos_ge_50":2,"tasa_reprobacion_pct":9.22},{"campus":"BUCARAMANGA","programa":"Geología","cursos":30,"matriculados_curso":210,"reprobados":33,"cursos_ge_50":2,"tasa_reprobacion_pct":15.71},{"campus":"VALLEDUPAR","programa":"Morfofisiología","cursos":5,"matriculados_curso":87,"reprobados":31,"cursos_ge_50":2,"tasa_reprobacion_pct":35.63},{"campus":"BUCARAMANGA","programa":"Tecnología supervisión de obras civiles","cursos":26,"matriculados_curso":166,"reprobados":11,"cursos_ge_50":2,"tasa_reprobacion_pct":6.63},{"campus":"VALLEDUPAR","programa":"Cursos de informática","cursos":82,"matriculados_curso":1769,"reprobados":201,"cursos_ge_50":1,"tasa_reprobacion_pct":11.36},{"campus":"CUCUTA","programa":"Cursos de informática","cursos":84,"matriculados_curso":1576,"reprobados":163,"cursos_ge_50":1,"tasa_reprobacion_pct":10.34},{"campus":"VALLEDUPAR","programa":"Fisioterapia","cursos":53,"matriculados_curso":1222,"reprobados":92,"cursos_ge_50":1,"tasa_reprobacion_pct":7.53},{"campus":"CUCUTA","programa":"Psicología","cursos":48,"matriculados_curso":872,"reprobados":59,"cursos_ge_50":1,"tasa_reprobacion_pct":6.77},{"campus":"VALLEDUPAR","programa":"Administración financiera","cursos":39,"matriculados_curso":561,"reprobados":52,"cursos_ge_50":1,"tasa_reprobacion_pct":9.27},{"campus":"CUCUTA","programa":"Derecho","cursos":60,"matriculados_curso":861,"reprobados":38,"cursos_ge_50":1,"tasa_reprobacion_pct":4.41},{"campus":"CUCUTA","programa":"Morfofisiología","cursos":7,"matriculados_curso":200,"reprobados":33,"cursos_ge_50":1,"tasa_reprobacion_pct":16.5},{"campus":"CUCUTA","programa":"Ciencias básicas salud","cursos":16,"matriculados_curso":372,"reprobados":29,"cursos_ge_50":1,"tasa_reprobacion_pct":7.8},{"campus":"VALLEDUPAR","programa":"Comunicación social y periodismo","cursos":33,"matriculados_curso":184,"reprobados":10,"cursos_ge_50":1,"tasa_reprobacion_pct":5.43},{"campus":"CUCUTA","programa":"Bienestar universitario","cursos":67,"matriculados_curso":1562,"reprobados":144,"cursos_ge_50":0,"tasa_reprobacion_pct":9.22},{"campus":"CUCUTA","programa":"Idiomas","cursos":95,"matriculados_curso":1744,"reprobados":135,"cursos_ge_50":0,"tasa_reprobacion_pct":7.74},{"campus":"BUCARAMANGA","programa":"Humanidades","cursos":63,"matriculados_curso":1493,"reprobados":129,"cursos_ge_50":0,"tasa_reprobacion_pct":8.64},{"campus":"VALLEDUPAR","programa":"Idiomas","cursos":95,"matriculados_curso":1656,"reprobados":119,"cursos_ge_50":0,"tasa_reprobacion_pct":7.19},{"campus":"CUCUTA","programa":"Medicina","cursos":46,"matriculados_curso":1636,"reprobados":87,"cursos_ge_50":0,"tasa_reprobacion_pct":5.32},{"campus":"CUCUTA","programa":"Bacteriología y laboratorio clínico","cursos":37,"matriculados_curso":990,"reprobados":67,"cursos_ge_50":0,"tasa_reprobacion_pct":6.77},{"campus":"BUCARAMANGA","programa":"Derecho","cursos":50,"matriculados_curso":714,"reprobados":53,"cursos_ge_50":0,"tasa_reprobacion_pct":7.42},{"campus":"BUCARAMANGA","programa":"Ingeniería civil","cursos":46,"matriculados_curso":712,"reprobados":50,"cursos_ge_50":0,"tasa_reprobacion_pct":7.02},{"campus":"VALLEDUPAR","programa":"Diseño gráfico","cursos":36,"matriculados_curso":412,"reprobados":47,"cursos_ge_50":0,"tasa_reprobacion_pct":11.41},{"campus":"BUCARAMANGA","programa":"Instrumentación quirúrgica","cursos":43,"matriculados_curso":1145,"reprobados":46,"cursos_ge_50":0,"tasa_reprobacion_pct":4.02},{"campus":"CUCUTA","programa":"Comercio exterior","cursos":39,"matriculados_curso":881,"reprobados":45,"cursos_ge_50":0,"tasa_reprobacion_pct":5.11},{"campus":"CUCUTA","programa":"Terapia ocupacional","cursos":39,"matriculados_curso":599,"reprobados":45,"cursos_ge_50":0,"tasa_reprobacion_pct":7.51},{"campus":"CUCUTA","programa":"Mercadeo y publicidad","cursos":60,"matriculados_curso":1283,"reprobados":43,"cursos_ge_50":0,"tasa_reprobacion_pct":3.35},{"campus":"BUCARAMANGA","programa":"Administración financiera","cursos":42,"matriculados_curso":536,"reprobados":38,"cursos_ge_50":0,"tasa_reprobacion_pct":7.09},{"campus":"BUCARAMANGA","programa":"Medicina","cursos":29,"matriculados_curso":758,"reprobados":37,"cursos_ge_50":0,"tasa_reprobacion_pct":4.88},{"campus":"BUCARAMANGA","programa":"Departamento de salud pública","cursos":22,"matriculados_curso":543,"reprobados":36,"cursos_ge_50":0,"tasa_reprobacion_pct":6.63},{"campus":"VALLEDUPAR","programa":"Psicología","cursos":42,"matriculados_curso":934,"reprobados":34,"cursos_ge_50":0,"tasa_reprobacion_pct":3.64},{"campus":"BUCARAMANGA","programa":"Ingeniería de software","cursos":56,"matriculados_curso":706,"reprobados":32,"cursos_ge_50":0,"tasa_reprobacion_pct":4.53},{"campus":"BUCARAMANGA","programa":"Enfermería","cursos":37,"matriculados_curso":648,"reprobados":31,"cursos_ge_50":0,"tasa_reprobacion_pct":4.78},{"campus":"BUCARAMANGA","programa":"Fonoaudiología","cursos":25,"matriculados_curso":380,"reprobados":30,"cursos_ge_50":0,"tasa_reprobacion_pct":7.89},{"campus":"CUCUTA","programa":"Investigación","cursos":17,"matriculados_curso":466,"reprobados":29,"cursos_ge_50":0,"tasa_reprobacion_pct":6.22},{"campus":"CUCUTA","programa":"Sociohumanidades","cursos":21,"matriculados_curso":470,"reprobados":23,"cursos_ge_50":0,"tasa_reprobacion_pct":4.89},{"campus":"BUCARAMANGA","programa":"Mercadeo y publicidad","cursos":51,"matriculados_curso":944,"reprobados":22,"cursos_ge_50":0,"tasa_reprobacion_pct":2.33},{"campus":"CUCUTA","programa":"Fisioterapia","cursos":16,"matriculados_curso":474,"reprobados":22,"cursos_ge_50":0,"tasa_reprobacion_pct":4.64},{"campus":"BUCARAMANGA","programa":"Ingeniería ambiental","cursos":27,"matriculados_curso":326,"reprobados":21,"cursos_ge_50":0,"tasa_reprobacion_pct":6.44},{"campus":"BUCARAMANGA","programa":"Contaduría pública","cursos":28,"matriculados_curso":341,"reprobados":18,"cursos_ge_50":0,"tasa_reprobacion_pct":5.28},{"campus":"BOGOTA","programa":"Bienestar institucional","cursos":1,"matriculados_curso":30,"reprobados":13,"cursos_ge_50":0,"tasa_reprobacion_pct":43.33},{"campus":"BUCARAMANGA","programa":"Comunicación social y periodismo","cursos":37,"matriculados_curso":302,"reprobados":13,"cursos_ge_50":0,"tasa_reprobacion_pct":4.3},{"campus":"BUCARAMANGA","programa":"Administración de negocios internacionales","cursos":27,"matriculados_curso":381,"reprobados":12,"cursos_ge_50":0,"tasa_reprobacion_pct":3.15},{"campus":"CUCUTA","programa":"Ingeniería industrial","cursos":37,"matriculados_curso":448,"reprobados":12,"cursos_ge_50":0,"tasa_reprobacion_pct":2.68},{"campus":"BOGOTA","programa":"Cursos de informática","cursos":4,"matriculados_curso":94,"reprobados":10,"cursos_ge_50":0,"tasa_reprobacion_pct":10.64},{"campus":"BOGOTA","programa":"Idiomas","cursos":14,"matriculados_curso":139,"reprobados":9,"cursos_ge_50":0,"tasa_reprobacion_pct":6.47},{"campus":"BUCARAMANGA","programa":"Terapia ocupacional","cursos":30,"matriculados_curso":482,"reprobados":8,"cursos_ge_50":0,"tasa_reprobacion_pct":1.66},{"campus":"VALLEDUPAR","programa":"Desarrollo estudiantil","cursos":8,"matriculados_curso":180,"reprobados":8,"cursos_ge_50":0,"tasa_reprobacion_pct":4.44},{"campus":"BUCARAMANGA","programa":"Antropología","cursos":16,"matriculados_curso":87,"reprobados":7,"cursos_ge_50":0,"tasa_reprobacion_pct":8.05},{"campus":"BUCARAMANGA","programa":"Éxito estudiantil","cursos":2,"matriculados_curso":43,"reprobados":7,"cursos_ge_50":0,"tasa_reprobacion_pct":16.28},{"campus":"BUCARAMANGA","programa":"Ciencias básicas tecnología","cursos":4,"matriculados_curso":60,"reprobados":6,"cursos_ge_50":0,"tasa_reprobacion_pct":10},{"campus":"BUCARAMANGA","programa":"Informática","cursos":11,"matriculados_curso":168,"reprobados":6,"cursos_ge_50":0,"tasa_reprobacion_pct":3.57},{"campus":"BUCARAMANGA","programa":"Microbiología industrial","cursos":19,"matriculados_curso":173,"reprobados":5,"cursos_ge_50":0,"tasa_reprobacion_pct":2.89},{"campus":"VALLEDUPAR","programa":"Enfermería","cursos":1,"matriculados_curso":19,"reprobados":4,"cursos_ge_50":0,"tasa_reprobacion_pct":21.05},{"campus":"BUCARAMANGA","programa":"Ciencias de la salud","cursos":1,"matriculados_curso":8,"reprobados":2,"cursos_ge_50":0,"tasa_reprobacion_pct":25},{"campus":"BUCARAMANGA","programa":"Ingeniería en ciencias de la computación e inteligencia artificial","cursos":6,"matriculados_curso":67,"reprobados":2,"cursos_ge_50":0,"tasa_reprobacion_pct":2.99},{"campus":"BUCARAMANGA","programa":"Ingeniería petroquímica","cursos":18,"matriculados_curso":64,"reprobados":1,"cursos_ge_50":0,"tasa_reprobacion_pct":1.56},{"campus":"BUCARAMANGA","programa":"Ingeniería agroindustrial","cursos":5,"matriculados_curso":27,"reprobados":0,"cursos_ge_50":0,"tasa_reprobacion_pct":0},{"campus":"BUCARAMANGA","programa":"Ingeniería en energías","cursos":3,"matriculados_curso":14,"reprobados":0,"cursos_ge_50":0,"tasa_reprobacion_pct":0},{"campus":"BUCARAMANGA","programa":"Licenciatura en educación infantil","cursos":8,"matriculados_curso":67,"reprobados":0,"cursos_ge_50":0,"tasa_reprobacion_pct":0},{"campus":"BUCARAMANGA","programa":"Técnico laboral en instalación y mantenimiento de sistemas solares fotovoltaicos","cursos":1,"matriculados_curso":6,"reprobados":0,"cursos_ge_50":0,"tasa_reprobacion_pct":0},{"campus":"BUCARAMANGA","programa":"Tecnología en gestión logística del comercio exterior","cursos":1,"matriculados_curso":13,"reprobados":0,"cursos_ge_50":0,"tasa_reprobacion_pct":0}],"source":{"label":"Bases académicas UDES 2026-2, corte P1","files":["2026-2_P1P2P3_Estudiante.xlsx","2026-2_P1P2P3_grupos.xlsx"],"evidenceFlow":[{"title":"Alcance","detail":"Resultados del periodo 2026-2 al corte P1. Son alertas tempranas y no resultados definitivos."},{"title":"Privacidad","detail":"El informe excluye nombres e identificadores estudiantiles y suprime el detalle de cursos con menos de cinco matriculados."},{"title":"Cálculo","detail":"Reprobación P1: nota inferior a 3,0. Tasa del curso: reprobados / matriculados, según la base consolidada de grupos."}]}},"critical_courses":{"label":"Cursos con reprobación P1 igual o superior al 50 %","rows":[{"campus":"BUCARAMANGA","programa":"Tecnología en comunicación gráfica","materia_codigo":"162602","materia":"Trabajo de grado","grupo":"A","plan_eval":"TRES CORTES","matriculados":15,"reprobados":15,"no_presenta":0,"tasa_reprobacion_pct":100,"promedio":2.3,"corte":"P1"},{"campus":"CUCUTA","programa":"Ingeniería de sistemas","materia_codigo":"133802","materia":"Herramientas informáticas para el seguimiento de los proyectos (electiva)","grupo":"A","plan_eval":"TRES CORTES","matriculados":5,"reprobados":5,"no_presenta":0,"tasa_reprobacion_pct":100,"promedio":2.3,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Ingeniería industrial","materia_codigo":"15457","materia":"Ingeniería de métodos","grupo":"A","plan_eval":"TRES CORTES","matriculados":38,"reprobados":37,"no_presenta":0,"tasa_reprobacion_pct":97.4,"promedio":2.4,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Tecnología en comunicación gráfica","materia_codigo":"162602","materia":"Trabajo de grado","grupo":"B","plan_eval":"TRES CORTES","matriculados":14,"reprobados":13,"no_presenta":1,"tasa_reprobacion_pct":92.9,"promedio":1.9,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Administración financiera","materia_codigo":"62502","materia":"Estructuración y administración de portafolio","grupo":"A","plan_eval":"TRES CORTES","matriculados":14,"reprobados":13,"no_presenta":0,"tasa_reprobacion_pct":92.9,"promedio":2.4,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Psicología","materia_codigo":"21263","materia":"Psicología evolutiva (adultez y vejez)","grupo":"A","plan_eval":"TRES CORTES","matriculados":14,"reprobados":12,"no_presenta":0,"tasa_reprobacion_pct":85.7,"promedio":2.3,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Tecnología en comunicación gráfica","materia_codigo":"162105","materia":"Historia de la comunicación gráfica aplicada (siglo XIX y XV)","grupo":"B","plan_eval":"TRES CORTES","matriculados":7,"reprobados":6,"no_presenta":0,"tasa_reprobacion_pct":85.7,"promedio":2.4,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Fisioterapia","materia_codigo":"142502","materia":"Terapia manual","grupo":"C","plan_eval":"TRES CORTES","matriculados":12,"reprobados":10,"no_presenta":0,"tasa_reprobacion_pct":83.3,"promedio":2.6,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"35236","materia":"Reproducción animal I","grupo":"A","plan_eval":"TRES CORTES","matriculados":16,"reprobados":13,"no_presenta":0,"tasa_reprobacion_pct":81.3,"promedio":2.4,"corte":"P1"},{"campus":"CUCUTA","programa":"Psicología","materia_codigo":"21227","materia":"Trabajo de grado I","grupo":"A","plan_eval":"TRES CORTES","matriculados":16,"reprobados":13,"no_presenta":0,"tasa_reprobacion_pct":81.3,"promedio":2.6,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Tecnología en comunicación gráfica","materia_codigo":"162105","materia":"Historia de la comunicación gráfica aplicada (siglo XIX y XV)","grupo":"A","plan_eval":"TRES CORTES","matriculados":10,"reprobados":8,"no_presenta":0,"tasa_reprobacion_pct":80,"promedio":2.3,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Morfofisiología","materia_codigo":"282202","materia":"Morfología","grupo":"A","plan_eval":"TRES CORTES","matriculados":5,"reprobados":4,"no_presenta":0,"tasa_reprobacion_pct":80,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Geología","materia_codigo":"642001","materia":"Geología de Colombia","grupo":"A","plan_eval":"TRES CORTES","matriculados":14,"reprobados":11,"no_presenta":0,"tasa_reprobacion_pct":78.6,"promedio":2.6,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Matemáticas","materia_codigo":"16133","materia":"Álgebra lineal","grupo":"B","plan_eval":"TRES CORTES","matriculados":18,"reprobados":14,"no_presenta":0,"tasa_reprobacion_pct":77.8,"promedio":2.4,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Medicina","materia_codigo":"16181","materia":"Biociencias I (medicina)","grupo":"A","plan_eval":"TRES CORTES","matriculados":33,"reprobados":25,"no_presenta":0,"tasa_reprobacion_pct":75.8,"promedio":2.4,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"351303","materia":"Anatomía II","grupo":"A","plan_eval":"TRES CORTES","matriculados":37,"reprobados":28,"no_presenta":0,"tasa_reprobacion_pct":75.7,"promedio":2.4,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Morfofisiología","materia_codigo":"321702","materia":"Morfofisiología","grupo":"A","plan_eval":"TRES CORTES","matriculados":20,"reprobados":15,"no_presenta":0,"tasa_reprobacion_pct":75,"promedio":2.6,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Morfofisiología","materia_codigo":"32122","materia":"Morfofisiología","grupo":"A","plan_eval":"TRES CORTES","matriculados":20,"reprobados":15,"no_presenta":0,"tasa_reprobacion_pct":75,"promedio":2.6,"corte":"P1"},{"campus":"BOGOTA","programa":"Instrumentación quirúrgica","materia_codigo":"24023","materia":"Fundamentos y procesos quirúrgicos","grupo":"B","plan_eval":"TRES CORTES","matriculados":12,"reprobados":9,"no_presenta":1,"tasa_reprobacion_pct":75,"promedio":2.4,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Ciencias básicas","materia_codigo":"35352","materia":"Biociencias II","grupo":"A","plan_eval":"TRES CORTES","matriculados":35,"reprobados":26,"no_presenta":0,"tasa_reprobacion_pct":74.3,"promedio":2.7,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Matemáticas","materia_codigo":"16122","materia":"Física mecánica","grupo":"B","plan_eval":"TRES CORTES","matriculados":30,"reprobados":22,"no_presenta":1,"tasa_reprobacion_pct":73.3,"promedio":2.2,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Fisioterapia","materia_codigo":"141501","materia":"Fundamentos de farmacología","grupo":"A","plan_eval":"TRES CORTES","matriculados":15,"reprobados":11,"no_presenta":0,"tasa_reprobacion_pct":73.3,"promedio":2.5,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"35125","materia":"Farmacología veterinaria","grupo":"A","plan_eval":"TRES CORTES","matriculados":11,"reprobados":8,"no_presenta":0,"tasa_reprobacion_pct":72.7,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Fisioterapia","materia_codigo":"141401","materia":"Patokinesiología","grupo":"A","plan_eval":"TRES CORTES","matriculados":29,"reprobados":21,"no_presenta":0,"tasa_reprobacion_pct":72.4,"promedio":2.5,"corte":"P1"},{"campus":"BOGOTA","programa":"Instrumentación quirúrgica","materia_codigo":"28114","materia":"Procesos quirúrgicos especializados II - videocirugía y endoscopía","grupo":"A","plan_eval":"TRES CORTES","matriculados":18,"reprobados":13,"no_presenta":0,"tasa_reprobacion_pct":72.2,"promedio":2.6,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Bacteriología y laboratorio clínico","materia_codigo":"32170","materia":"Morfofisiología","grupo":"A","plan_eval":"TRES CORTES","matriculados":25,"reprobados":18,"no_presenta":0,"tasa_reprobacion_pct":72,"promedio":2.6,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Medicina","materia_codigo":"32493","materia":"Morfofisiología humana","grupo":"A","plan_eval":"TRES CORTES","matriculados":25,"reprobados":18,"no_presenta":0,"tasa_reprobacion_pct":72,"promedio":2.7,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Bacteriología y laboratorio clínico","materia_codigo":"172701","materia":"Bioquímica II","grupo":"A","plan_eval":"TRES CORTES","matriculados":35,"reprobados":25,"no_presenta":1,"tasa_reprobacion_pct":71.4,"promedio":2.5,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Ciencias básicas","materia_codigo":"35352","materia":"Biociencias II","grupo":"B","plan_eval":"TRES CORTES","matriculados":17,"reprobados":12,"no_presenta":1,"tasa_reprobacion_pct":70.6,"promedio":2.6,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Morfofisiología","materia_codigo":"321702","materia":"Morfofisiología","grupo":"B","plan_eval":"TRES CORTES","matriculados":13,"reprobados":9,"no_presenta":1,"tasa_reprobacion_pct":69.2,"promedio":2.7,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"352601","materia":"Teriogenología I","grupo":"A","plan_eval":"TRES CORTES","matriculados":35,"reprobados":24,"no_presenta":0,"tasa_reprobacion_pct":68.6,"promedio":2.6,"corte":"P1"},{"campus":"CUCUTA","programa":"Ingeniería de sistemas","materia_codigo":"132201","materia":"Programacion I","grupo":"A","plan_eval":"TRES CORTES","matriculados":44,"reprobados":30,"no_presenta":0,"tasa_reprobacion_pct":68.2,"promedio":2.6,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Bacteriología y laboratorio clínico","materia_codigo":"172301","materia":"Biología molecular y genética","grupo":"A","plan_eval":"TRES CORTES","matriculados":25,"reprobados":17,"no_presenta":0,"tasa_reprobacion_pct":68,"promedio":2.7,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"352503","materia":"Parasitología veterinaria","grupo":"A","plan_eval":"TRES CORTES","matriculados":21,"reprobados":14,"no_presenta":0,"tasa_reprobacion_pct":66.7,"promedio":2.7,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Matemáticas","materia_codigo":"16171","materia":"Matemáticas I","grupo":"B","plan_eval":"TRES CORTES","matriculados":18,"reprobados":12,"no_presenta":0,"tasa_reprobacion_pct":66.7,"promedio":2.5,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Medicina veterinaria y zootecnia","materia_codigo":"35208","materia":"Cirugía imagenología","grupo":"A","plan_eval":"TRES CORTES","matriculados":18,"reprobados":12,"no_presenta":0,"tasa_reprobacion_pct":66.7,"promedio":2.9,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Bacteriología y laboratorio clínico","materia_codigo":"172701","materia":"Bioquímica II","grupo":"A","plan_eval":"TRES CORTES","matriculados":32,"reprobados":21,"no_presenta":0,"tasa_reprobacion_pct":65.6,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Morfofisiología","materia_codigo":"32122","materia":"Morfofisiología","grupo":"B","plan_eval":"TRES CORTES","matriculados":23,"reprobados":15,"no_presenta":1,"tasa_reprobacion_pct":65.2,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"351204","materia":"Histoembriología","grupo":"B","plan_eval":"TRES CORTES","matriculados":37,"reprobados":24,"no_presenta":0,"tasa_reprobacion_pct":64.9,"promedio":2.6,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Derecho","materia_codigo":"292702","materia":"Derecho procesal administrativo","grupo":"B","plan_eval":"TRES CORTES","matriculados":17,"reprobados":11,"no_presenta":0,"tasa_reprobacion_pct":64.7,"promedio":2.5,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Medicina","materia_codigo":"32493","materia":"Morfofisiología humana","grupo":"B","plan_eval":"TRES CORTES","matriculados":22,"reprobados":14,"no_presenta":0,"tasa_reprobacion_pct":63.6,"promedio":2.7,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Medicina veterinaria y zootecnia","materia_codigo":"35304","materia":"Agrostología y forrajes","grupo":"A","plan_eval":"TRES CORTES","matriculados":19,"reprobados":12,"no_presenta":0,"tasa_reprobacion_pct":63.2,"promedio":3,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Matemáticas","materia_codigo":"16113","materia":"Cálculo multivariable","grupo":"D","plan_eval":"TRES CORTES","matriculados":35,"reprobados":22,"no_presenta":2,"tasa_reprobacion_pct":62.9,"promedio":2.6,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Medicina veterinaria y zootecnia","materia_codigo":"35154","materia":"Histología, embriología","grupo":"A","plan_eval":"TRES CORTES","matriculados":35,"reprobados":22,"no_presenta":0,"tasa_reprobacion_pct":62.9,"promedio":2.7,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"351203","materia":"Anatomía I","grupo":"C","plan_eval":"TRES CORTES","matriculados":34,"reprobados":21,"no_presenta":0,"tasa_reprobacion_pct":61.8,"promedio":2.4,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Ciencias básicas","materia_codigo":"16121","materia":"Biociencias - química","grupo":"D","plan_eval":"SIN DATO","matriculados":34,"reprobados":21,"no_presenta":2,"tasa_reprobacion_pct":61.8,"promedio":2.9,"corte":"P1"},{"campus":"CUCUTA","programa":"Ingeniería de sistemas","materia_codigo":"132302","materia":"Estructura de datos","grupo":"P","plan_eval":"TRES CORTES","matriculados":34,"reprobados":21,"no_presenta":2,"tasa_reprobacion_pct":61.8,"promedio":2.5,"corte":"P1"},{"campus":"CUCUTA","programa":"Diseño gráfico","materia_codigo":"983403","materia":"Gráfica digital III (animación 2D)","grupo":"B","plan_eval":"TRES CORTES","matriculados":18,"reprobados":11,"no_presenta":0,"tasa_reprobacion_pct":61.1,"promedio":2.7,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Medicina veterinaria y zootecnia","materia_codigo":"35146","materia":"Medicina interna pequeños animales","grupo":"A","plan_eval":"TRES CORTES","matriculados":23,"reprobados":14,"no_presenta":0,"tasa_reprobacion_pct":60.9,"promedio":2.9,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Medicina veterinaria y zootecnia","materia_codigo":"35308","materia":"Inmunología","grupo":"A","plan_eval":"TRES CORTES","matriculados":23,"reprobados":14,"no_presenta":0,"tasa_reprobacion_pct":60.9,"promedio":2.8,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Fisioterapia","materia_codigo":"142401","materia":"Imágenes diagnósticas","grupo":"A","plan_eval":"TRES CORTES","matriculados":23,"reprobados":14,"no_presenta":0,"tasa_reprobacion_pct":60.9,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Idiomas","materia_codigo":"90991","materia":"Inglés I","grupo":"A","plan_eval":"TRES CORTES","matriculados":10,"reprobados":6,"no_presenta":0,"tasa_reprobacion_pct":60,"promedio":2.2,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Sociohumanidades","materia_codigo":"79112","materia":"Ética y responsabilidad social","grupo":"A","plan_eval":"TRES CORTES","matriculados":10,"reprobados":6,"no_presenta":0,"tasa_reprobacion_pct":60,"promedio":2.1,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Tecnología supervisión de obras civiles","materia_codigo":"46605","materia":"Trabajo de grado","grupo":"A","plan_eval":"TRES CORTES","matriculados":5,"reprobados":3,"no_presenta":0,"tasa_reprobacion_pct":60,"promedio":2.3,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Ciencias básicas","materia_codigo":"16104","materia":"Ecuaciones diferenciales","grupo":"A","plan_eval":"TRES CORTES","matriculados":22,"reprobados":13,"no_presenta":0,"tasa_reprobacion_pct":59.1,"promedio":2.9,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"351204","materia":"Histoembriología","grupo":"A","plan_eval":"TRES CORTES","matriculados":34,"reprobados":20,"no_presenta":0,"tasa_reprobacion_pct":58.8,"promedio":2.7,"corte":"P1"},{"campus":"CUCUTA","programa":"Morfofisiología","materia_codigo":"32111-1","materia":"Morfofisiología general","grupo":"T","plan_eval":"TRES CORTES","matriculados":17,"reprobados":10,"no_presenta":0,"tasa_reprobacion_pct":58.8,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"351203","materia":"Anatomía I","grupo":"B","plan_eval":"TRES CORTES","matriculados":29,"reprobados":17,"no_presenta":0,"tasa_reprobacion_pct":58.6,"promedio":2.7,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"351203","materia":"Anatomía I","grupo":"A","plan_eval":"TRES CORTES","matriculados":36,"reprobados":21,"no_presenta":1,"tasa_reprobacion_pct":58.3,"promedio":2.7,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Bacteriología y laboratorio clínico","materia_codigo":"172801","materia":"Correlación clínica","grupo":"A","plan_eval":"TRES CORTES","matriculados":24,"reprobados":14,"no_presenta":0,"tasa_reprobacion_pct":58.3,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Ciencias básicas","materia_codigo":"16132","materia":"Bioquímica general","grupo":"A","plan_eval":"TRES CORTES","matriculados":31,"reprobados":18,"no_presenta":0,"tasa_reprobacion_pct":58.1,"promedio":2.9,"corte":"P1"},{"campus":"BOGOTA","programa":"Instrumentación quirúrgica","materia_codigo":"28213","materia":"Procesos quirúrgicos especializados I - ginecología","grupo":"A","plan_eval":"TRES CORTES","matriculados":26,"reprobados":15,"no_presenta":0,"tasa_reprobacion_pct":57.7,"promedio":2.9,"corte":"P1"},{"campus":"CUCUTA","programa":"Enfermería","materia_codigo":"28482","materia":"Enfermería comunitaria I","grupo":"E","plan_eval":"TRES CORTES","matriculados":28,"reprobados":16,"no_presenta":0,"tasa_reprobacion_pct":57.1,"promedio":2.9,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Medicina veterinaria y zootecnia","materia_codigo":"35202","materia":"Agroecología","grupo":"B","plan_eval":"TRES CORTES","matriculados":21,"reprobados":12,"no_presenta":0,"tasa_reprobacion_pct":57.1,"promedio":2.9,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Idiomas","materia_codigo":"9316","materia":"Inglés VI","grupo":"VT","plan_eval":"TRES CORTES","matriculados":7,"reprobados":4,"no_presenta":1,"tasa_reprobacion_pct":57.1,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Ingeniería industrial","materia_codigo":"15447","materia":"Optimización I","grupo":"A","plan_eval":"TRES CORTES","matriculados":16,"reprobados":9,"no_presenta":0,"tasa_reprobacion_pct":56.3,"promedio":3.1,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Medicina veterinaria y zootecnia","materia_codigo":"35104","materia":"Anatomía I","grupo":"A","plan_eval":"TRES CORTES","matriculados":16,"reprobados":9,"no_presenta":0,"tasa_reprobacion_pct":56.3,"promedio":3,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"351303","materia":"Anatomía II","grupo":"B","plan_eval":"TRES CORTES","matriculados":34,"reprobados":19,"no_presenta":0,"tasa_reprobacion_pct":55.9,"promedio":2.7,"corte":"P1"},{"campus":"CUCUTA","programa":"Ingeniería de sistemas","materia_codigo":"13672","materia":"Gestión integral de alcance - tiempo y costo de proyectos informáticos","grupo":"A","plan_eval":"TRES CORTES","matriculados":34,"reprobados":19,"no_presenta":0,"tasa_reprobacion_pct":55.9,"promedio":2.8,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Medicina veterinaria y zootecnia","materia_codigo":"35102","materia":"Anatomía II","grupo":"B","plan_eval":"TRES CORTES","matriculados":27,"reprobados":15,"no_presenta":0,"tasa_reprobacion_pct":55.6,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Matemáticas","materia_codigo":"16123","materia":"Física eléctrica","grupo":"C","plan_eval":"TRES CORTES","matriculados":18,"reprobados":10,"no_presenta":0,"tasa_reprobacion_pct":55.6,"promedio":2.8,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Derecho","materia_codigo":"292701","materia":"Derecho probatorio","grupo":"A","plan_eval":"TRES CORTES","matriculados":18,"reprobados":10,"no_presenta":0,"tasa_reprobacion_pct":55.6,"promedio":2.9,"corte":"P1"},{"campus":"CUCUTA","programa":"Administración financiera","materia_codigo":"062701","materia":"Gestión de operación de instituciones financieras","grupo":"A","plan_eval":"TRES CORTES","matriculados":9,"reprobados":5,"no_presenta":0,"tasa_reprobacion_pct":55.6,"promedio":3.1,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Matemáticas","materia_codigo":"16122","materia":"Física mecánica","grupo":"A","plan_eval":"TRES CORTES","matriculados":29,"reprobados":16,"no_presenta":1,"tasa_reprobacion_pct":55.2,"promedio":2.5,"corte":"P1"},{"campus":"BOGOTA","programa":"Instrumentación quirúrgica","materia_codigo":"28113","materia":"Procesos quirúrgicos especializados I - cirugía general","grupo":"A","plan_eval":"TRES CORTES","matriculados":20,"reprobados":11,"no_presenta":0,"tasa_reprobacion_pct":55,"promedio":2.9,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Fisioterapia","materia_codigo":"141501","materia":"Fundamentos de farmacología","grupo":"B","plan_eval":"TRES CORTES","matriculados":20,"reprobados":11,"no_presenta":0,"tasa_reprobacion_pct":55,"promedio":2.9,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Bacteriología y laboratorio clínico","materia_codigo":"172803","materia":"Control e inocuidad industrial","grupo":"A","plan_eval":"TRES CORTES","matriculados":44,"reprobados":24,"no_presenta":0,"tasa_reprobacion_pct":54.5,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Morfofisiología","materia_codigo":"32111","materia":"Morfofisiología general","grupo":"A","plan_eval":"TRES CORTES","matriculados":22,"reprobados":12,"no_presenta":0,"tasa_reprobacion_pct":54.5,"promedio":2.9,"corte":"P1"},{"campus":"CUCUTA","programa":"Ingeniería de sistemas","materia_codigo":"1331002","materia":"Diseño de algoritmo y sistemas (electiva)","grupo":"A","plan_eval":"TRES CORTES","matriculados":11,"reprobados":6,"no_presenta":0,"tasa_reprobacion_pct":54.5,"promedio":2.8,"corte":"P1"},{"campus":"CUCUTA","programa":"Administración financiera","materia_codigo":"063702","materia":"Gestión de servicio (electiva)","grupo":"A","plan_eval":"TRES CORTES","matriculados":35,"reprobados":19,"no_presenta":3,"tasa_reprobacion_pct":54.3,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Matemáticas","materia_codigo":"16112","materia":"Cálculo integral","grupo":"A","plan_eval":"TRES CORTES","matriculados":24,"reprobados":13,"no_presenta":0,"tasa_reprobacion_pct":54.2,"promedio":2.9,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"351204","materia":"Histoembriología","grupo":"C","plan_eval":"TRES CORTES","matriculados":26,"reprobados":14,"no_presenta":0,"tasa_reprobacion_pct":53.8,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Tecnología supervisión de obras civiles","materia_codigo":"461102","materia":"Álgebra y trigonometría","grupo":"A","plan_eval":"TRES CORTES","matriculados":13,"reprobados":7,"no_presenta":0,"tasa_reprobacion_pct":53.8,"promedio":3.3,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Matemáticas","materia_codigo":"16123","materia":"Física eléctrica","grupo":"B","plan_eval":"TRES CORTES","matriculados":30,"reprobados":16,"no_presenta":0,"tasa_reprobacion_pct":53.3,"promedio":3,"corte":"P1"},{"campus":"CUCUTA","programa":"Derecho","materia_codigo":"291104","materia":"Lógica y argumentación jurídica","grupo":"S","plan_eval":"TRES CORTES","matriculados":15,"reprobados":8,"no_presenta":0,"tasa_reprobacion_pct":53.3,"promedio":2.8,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Morfofisiología","materia_codigo":"32111","materia":"Morfofisiología general","grupo":"A","plan_eval":"TRES CORTES","matriculados":32,"reprobados":17,"no_presenta":0,"tasa_reprobacion_pct":53.1,"promedio":2.9,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Fisioterapia","materia_codigo":"142301","materia":"Biomecánica y análisis del movimiento","grupo":"A","plan_eval":"TRES CORTES","matriculados":17,"reprobados":9,"no_presenta":0,"tasa_reprobacion_pct":52.9,"promedio":3,"corte":"P1"},{"campus":"CUCUTA","programa":"Cursos de informática","materia_codigo":"07093","materia":"Infografías","grupo":"X","plan_eval":"TRES CORTES","matriculados":17,"reprobados":9,"no_presenta":0,"tasa_reprobacion_pct":52.9,"promedio":2.7,"corte":"P1"},{"campus":"CUCUTA","programa":"Ingeniería de sistemas","materia_codigo":"132101","materia":"Fundamentos de programacion","grupo":"P","plan_eval":"TRES CORTES","matriculados":17,"reprobados":9,"no_presenta":0,"tasa_reprobacion_pct":52.9,"promedio":2.9,"corte":"P1"},{"campus":"BOGOTA","programa":"Instrumentación quirúrgica","materia_codigo":"24023","materia":"Fundamentos y procesos quirúrgicos","grupo":"A","plan_eval":"TRES CORTES","matriculados":19,"reprobados":10,"no_presenta":0,"tasa_reprobacion_pct":52.6,"promedio":2.8,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Ciencias básicas","materia_codigo":"16201","materia":"Biología humana","grupo":"A","plan_eval":"TRES CORTES","matriculados":19,"reprobados":10,"no_presenta":0,"tasa_reprobacion_pct":52.6,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Matemáticas","materia_codigo":"16113","materia":"Cálculo multivariable","grupo":"B","plan_eval":"TRES CORTES","matriculados":31,"reprobados":16,"no_presenta":1,"tasa_reprobacion_pct":51.6,"promedio":2.3,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Sociohumanidades","materia_codigo":"234225","materia":"Elec.. diálogo innovación y liderazgo","grupo":"AVI","plan_eval":"TRES CORTES","matriculados":30,"reprobados":15,"no_presenta":1,"tasa_reprobacion_pct":50,"promedio":3.1,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Matemáticas","materia_codigo":"16104","materia":"Ecuaciones diferenciales","grupo":"C","plan_eval":"TRES CORTES","matriculados":28,"reprobados":14,"no_presenta":3,"tasa_reprobacion_pct":50,"promedio":2.9,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Medicina veterinaria","materia_codigo":"352702","materia":"Toxicología veterinaria","grupo":"A","plan_eval":"TRES CORTES","matriculados":28,"reprobados":14,"no_presenta":0,"tasa_reprobacion_pct":50,"promedio":2.9,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Bacteriología y laboratorio clínico","materia_codigo":"33406","materia":"Biotecnología","grupo":"A","plan_eval":"TRES CORTES","matriculados":22,"reprobados":11,"no_presenta":0,"tasa_reprobacion_pct":50,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Matemáticas","materia_codigo":"16115","materia":"Estadística inferencial","grupo":"A","plan_eval":"TRES CORTES","matriculados":20,"reprobados":10,"no_presenta":0,"tasa_reprobacion_pct":50,"promedio":3.1,"corte":"P1"},{"campus":"VALLEDUPAR","programa":"Cursos de informática","materia_codigo":"82111","materia":"Word aplicado a textos académicos","grupo":"A","plan_eval":"TRES CORTES","matriculados":20,"reprobados":10,"no_presenta":3,"tasa_reprobacion_pct":50,"promedio":2.6,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Matemáticas","materia_codigo":"16104","materia":"Ecuaciones diferenciales","grupo":"B","plan_eval":"TRES CORTES","matriculados":18,"reprobados":9,"no_presenta":0,"tasa_reprobacion_pct":50,"promedio":2.9,"corte":"P1"},{"campus":"CUCUTA","programa":"Diseño gráfico","materia_codigo":"984205","materia":"Percepción visual","grupo":"A","plan_eval":"TRES CORTES","matriculados":18,"reprobados":9,"no_presenta":0,"tasa_reprobacion_pct":50,"promedio":3.1,"corte":"P1"},{"campus":"CUCUTA","programa":"Ciencias básicas ingenierías","materia_codigo":"16122","materia":"Física mecánica","grupo":"Q","plan_eval":"TRES CORTES","matriculados":14,"reprobados":7,"no_presenta":1,"tasa_reprobacion_pct":50,"promedio":3,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Idiomas","materia_codigo":"9313","materia":"Inglés III","grupo":"N","plan_eval":"TRES CORTES","matriculados":8,"reprobados":4,"no_presenta":0,"tasa_reprobacion_pct":50,"promedio":2.1,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Tecnología en comunicación gráfica","materia_codigo":"162504","materia":"Animación de personajes","grupo":"A","plan_eval":"TRES CORTES","matriculados":8,"reprobados":4,"no_presenta":0,"tasa_reprobacion_pct":50,"promedio":2.5,"corte":"P1"},{"campus":"CUCUTA","programa":"Ciencias básicas ingenierías","materia_codigo":"16101","materia":"Cálculo diferencial","grupo":"S","plan_eval":"TRES CORTES","matriculados":8,"reprobados":4,"no_presenta":0,"tasa_reprobacion_pct":50,"promedio":3,"corte":"P1"},{"campus":"CUCUTA","programa":"Ciencias básicas ingenierías","materia_codigo":"16111","materia":"Álgebra superior","grupo":"A","plan_eval":"TRES CORTES","matriculados":8,"reprobados":4,"no_presenta":1,"tasa_reprobacion_pct":50,"promedio":3.2,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Geología","materia_codigo":"642504","materia":"Geología estructural","grupo":"A","plan_eval":"TRES CORTES","matriculados":6,"reprobados":3,"no_presenta":0,"tasa_reprobacion_pct":50,"promedio":2.8,"corte":"P1"},{"campus":"BUCARAMANGA","programa":"Tecnología en comunicación gráfica","materia_codigo":"163501","materia":"Metodología de la investigación","grupo":"A","plan_eval":"TRES CORTES","matriculados":6,"reprobados":3,"no_presenta":0,"tasa_reprobacion_pct":50,"promedio":3,"corte":"P1"},{"campus":"CUCUTA","programa":"Ciencias básicas salud","materia_codigo":"161410","materia":"Biofísica","grupo":"T","plan_eval":"TRES CORTES","matriculados":6,"reprobados":3,"no_presenta":0,"tasa_reprobacion_pct":50,"promedio":2.9,"corte":"P1"}],"source":{"label":"Bases académicas UDES 2026-2, corte P1","files":["2026-2_P1P2P3_Estudiante.xlsx","2026-2_P1P2P3_grupos.xlsx"],"evidenceFlow":[{"title":"Alcance","detail":"Resultados del periodo 2026-2 al corte P1. Son alertas tempranas y no resultados definitivos."},{"title":"Privacidad","detail":"El informe excluye nombres e identificadores estudiantiles y suprime el detalle de cursos con menos de cinco matriculados."},{"title":"Cálculo","detail":"Reprobación P1: nota inferior a 3,0. Tasa del curso: reprobados / matriculados, según la base consolidada de grupos."}]}},"quality":{"label":"Controles de calidad y cobertura","rows":[{"student_rows":53333,"student_columns":14,"group_rows":3027,"group_columns":19,"periods":["2026-2"],"cuts":["P1"],"campuses_students":["BOGOTA","BUCARAMANGA","CUCUTA","VALLEDUPAR"],"campuses_groups":["BOGOTA","BUCARAMANGA","CUCUTA","VALLEDUPAR"],"unique_students":8821,"p1_evaluable_rows":53333,"p1_missing_rows":0,"p1_coverage_pct":100,"p2_coverage_pct":0,"p3_coverage_pct":0,"accumulated_coverage_pct":100,"exact_duplicate_rows":0,"duplicate_grain_rows":742,"invalid_p1_rows":0,"group_formula_mismatch_rows":0,"groups_with_zero_enrollment":0,"groups_below_5":176,"critical_groups_total":123,"critical_groups_public":108,"critical_groups_suppressed_lt5":15}],"source":{"label":"Bases académicas UDES 2026-2, corte P1","files":["2026-2_P1P2P3_Estudiante.xlsx","2026-2_P1P2P3_grupos.xlsx"],"evidenceFlow":[{"title":"Alcance","detail":"Resultados del periodo 2026-2 al corte P1. Son alertas tempranas y no resultados definitivos."},{"title":"Privacidad","detail":"El informe excluye nombres e identificadores estudiantiles y suprime el detalle de cursos con menos de cinco matriculados."},{"title":"Cálculo","detail":"Reprobación P1: nota inferior a 3,0. Tasa del curso: reprobados / matriculados, según la base consolidada de grupos."}]}}}}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Flip.min.js"></script>
+<script>
+(function(){
+'use strict';
+/* ================= Datos (embebidos, sin fetch) ================= */
+const DATA=JSON.parse(document.getElementById('data').textContent);
+const Q=DATA.queries, INST=Q.institutional.rows[0], CAMP=Q.campus.rows.slice(), PROG=Q.programs.rows, CRIT=Q.critical_courses.rows, QU=Q.quality.rows[0];
+const FLOW=Q.institutional.source.evidenceFlow, FILES=Q.institutional.source.files;
+
+/* ================= Formato ================= */
+const fmtInt=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const fmtDec=(n,d)=>{const s=Number(n).toFixed(d).split('.');return (s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.'))+(s[1]?','+s[1]:'')};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ACC={INGENIERIA:'Ingeniería',INGENIERIAS:'Ingenierías',MATEMATICAS:'Matemáticas',TECNOLOGIA:'Tecnología',COMUNICACION:'Comunicación',BACTERIOLOGIA:'Bacteriología',PSICOLOGIA:'Psicología',GEOLOGIA:'Geología',ADMINISTRACION:'Administración',INSTRUMENTACION:'Instrumentación',MORFOFISIOLOGIA:'Morfofisiología',BASICAS:'Básicas',DISENO:'Diseño',INFORMATICA:'Informática',INFORMATICAS:'Informáticas',BOGOTA:'Bogotá',CUCUTA:'Cúcuta',ECONOMIA:'Economía',ESTRUCTURACION:'Estructuración',GRAFICA:'Gráfica',GRAFICO:'Gráfico',QUIRURGICA:'Quirúrgica',SUPERVISION:'Supervisión',METODOS:'Métodos',ANALISIS:'Análisis',SOCIOHUMANIDADES:'Sociohumanidades'};
+const SMALL=new Set(['DE','DEL','LA','EL','LOS','LAS','Y','EN','A','E','O','PARA','CON','POR']);
+const tc=s=>String(s);
+const clamp=(a,b,v)=>Math.min(b,Math.max(a,v));
+
+/* ================= Cifras derivadas (todo desde data.json) ================= */
+const pctCrit=INST.cursos_ge_50/INST.cursos*100;
+const campBy=CAMP.slice().sort((a,b)=>b.cursos_ge_50-a.cursos_ge_50);
+const lead=campBy[0], leadShare=lead.cursos_ge_50/INST.cursos_ge_50*100;
+const topRate=CAMP.slice().sort((a,b)=>b.tasa_reprobacion_pct-a.tasa_reprobacion_pct)[0];
+const progTop=PROG.slice().sort((a,b)=>b.cursos_ge_50-a.cursos_ge_50||b.reprobados-a.reprobados);
+const prog10=progTop.slice(0,10), progWith=PROG.filter(r=>r.cursos_ge_50>0), progWithout=PROG.length-progWith.length;
+const top3=prog10.slice(0,3), top3Sum=top3.reduce((a,r)=>a+r.cursos_ge_50,0);
+const byRate=CRIT.slice().sort((a,b)=>b.tasa_reprobacion_pct-a.tasa_reprobacion_pct||b.matriculados-a.matriculados);
+const TOPN=7, crTop=byRate.slice(0,TOPN), ge90=CRIT.filter(r=>r.tasa_reprobacion_pct>=90).length;
+const BANDS=[[50,60],[60,70],[70,80],[80,90],[90,101]].map(([a,b])=>({a,b,n:CRIT.filter(r=>r.tasa_reprobacion_pct>=a&&r.tasa_reprobacion_pct<b).length}));
+const bandMax=Math.max(...BANDS.map(b=>b.n));
+const matr=CRIT.map(r=>r.matriculados).sort((a,b)=>a-b);
+const median=matr.length%2?matr[(matr.length-1)/2]:(matr[matr.length/2-1]+matr[matr.length/2])/2;
+const small15=CRIT.filter(r=>r.matriculados<=15).length;
+const pIdi=PROG.find(r=>/IDIOMAS/.test(r.programa)), pMor=PROG.slice().filter(r=>r.cursos_ge_50>0).sort((a,b)=>b.tasa_reprobacion_pct-a.tasa_reprobacion_pct)[0];
+const pMat=PROG.find(r=>/^MATEMATICAS/.test(r.programa));
+const shortCamp=c=>tc(c);
+
+/* ================= Estado / utilidades de movimiento ================= */
+const HAS=typeof window.gsap!=='undefined';
+let RM=false;
+const $=(s,r)=> (r||document).querySelector(s);
+const SL=[];
+function rise(tl,t,pos,o){o=o||{};tl.from(t,{autoAlpha:0,y:RM?0:(o.y!==undefined?o.y:16),duration:RM?.2:(o.d||.55),ease:'power4.out',stagger:RM?0:(o.s!==undefined?o.s:.07)},pos)}
+function grow(tl,t,prop,pos,o){o=o||{};if(RM){tl.from(t,{autoAlpha:0,duration:.2},pos);return}
+  const v={duration:o.d||.8,ease:'power4.out',stagger:o.s!==undefined?o.s:.09};v[prop]=0;v.transformOrigin=o.origin||'0 50%';tl.from(t,v,pos)}
+function count(tl,el,to,dec,pos,d,suf){if(!el)return;const f=v=>fmtDec(v,dec||0)+(suf||'');
+  if(RM||!HAS){el.textContent=f(to);return}
+  el.textContent=f(0);const o={v:0};
+  tl.to(o,{v:to,duration:d||1.1,ease:'power2.out',onUpdate:()=>{el.textContent=f(o.v)}},pos)}
+const hdr=(tl,q)=>rise(tl,q('[data-h]'),0,{s:.08,y:14,d:.5});
+
+/* ================= Diapositivas ================= */
+function head(k,t,s){return `<header class="hd"><p class="kicker" data-h>${k}</p><h2 data-h>${t}</h2>${s?`<p class="sub" data-h>${s}</p>`:''}</header>`}
+const ICON={
+  scope:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
+  priv:'<svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+  calc:'<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg>'
+};
+
+/* 1 Portada */
+SL.push({key:'cover',kicker:'Portada',fig:'≥ 50 %',title:'Mapa de riesgo académico: cursos con reprobación de 50 % o más',
+ notes:`Universidad de Santander, periodo 2026-2, corte P1. Este informe responde: ¿qué cursos presentan reprobación de 50 % o más y en qué campus y programas se concentran? Aclarar desde el inicio que P1 es una alerta temprana y no un resultado definitivo. Fuente: ${FILES.join(' y ')}.`,
+ html:()=>`<div class="cover"><div class="cv-left"><p class="kicker" data-h>Universidad de Santander · 2026-2 · Corte P1</p><h1 data-h>Mapa de riesgo académico</h1><p class="cv-sub" data-h>Cursos con reprobación de 50 % o más y dónde se concentran</p><p class="badge" data-h>Alertas tempranas, no resultados definitivos</p></div><div class="cv-mark" aria-hidden="true"><span class="ge" data-m>≥</span><span class="n" data-m id="cvn">50</span><span class="pc" data-m>%</span></div></div><div class="cv-foot" data-f>${CAMP.map(c=>`<span>${esc(shortCamp(c.campus))}</span>`).join('')}</div>`,
+ anim:(tl,q)=>{rise(tl,q('[data-h]'),0.05,{s:.1,y:20,d:.7});
+  rise(tl,q('[data-m]'),0.15,{s:.06,y:30,d:.8});count(tl,q('#cvn')[0],50,0,0.15,1.2);rise(tl,q('[data-f] span'),0.7,{s:.08,y:8})}});
+
+/* 2 Mensaje clave */
+let dotCv=null; const dots={reveal:1,hot:1};
+SL.push({key:'key',kicker:'Mensaje clave',fig:`${fmtInt(INST.cursos_ge_50)} de ${fmtInt(INST.cursos)}`,
+ title:`${fmtInt(INST.cursos_ge_50)} de ${fmtInt(INST.cursos)} cursos tienen reprobación de 50 % o más`,
+ sub:`Es el ${fmtDec(pctCrit,1)} % de los cursos, repartido en ${INST.programas_con_curso_ge_50} programas y ${INST.campus_con_curso_ge_50} campus.`,
+ notes:`Qué pasa: ${INST.cursos_ge_50} de ${fmtInt(INST.cursos)} cursos superan el umbral de 50 % de reprobación en P1 (${fmtDec(pctCrit,2)} %). Por qué importa: al corte P1 los cortes P2 y P3 tienen cobertura de ${QU.p2_coverage_pct} %, así que es una señal temprana para seguir. El gráfico de puntos es una unidad por curso; los rojos van primero por orden, su posición no indica campus ni programa.`,
+ html:function(){return head(this.kicker,this.title,this.sub)+`<div class="bd"><div class="dotcol"><div class="dotwrap" data-a><canvas id="dotcv" role="img" aria-label="${INST.cursos_ge_50} de ${INST.cursos} cursos con reprobación de 50 % o más"></canvas></div><p class="legend" data-a><span><i class="sw"></i>Un punto = un curso</span><span><i class="sw h"></i>Reprobación ≥ 50 % (${INST.cursos_ge_50})</span></p></div><div class="keycol"><div class="keybig" data-a><span class="num" id="k123">${INST.cursos_ge_50}</span><p>cursos por encima del umbral al corte P1</p></div><div class="why" data-a><span class="lab">Por qué importa</span><p>P1 es una alerta temprana: P2 y P3 aún no tienen datos (${QU.p2_coverage_pct} % de cobertura). Es el momento de mirar estos cursos, no de darlos por definitivos.</p></div></div></div>`},
+ anim:(tl,q)=>{hdr(tl,q);rise(tl,q('.dotwrap,.legend'),0.1,{s:.1,y:10});
+  if(RM||!HAS){dots.reveal=1;dots.hot=1;drawDots();}else{
+   dots.reveal=0;dots.hot=0;
+   tl.to(dots,{reveal:1,duration:1.3,ease:'power2.inOut',onUpdate:drawDots},0.2).to(dots,{hot:1,duration:.8,ease:'power4.out',onUpdate:drawDots},1.25)}
+  rise(tl,q('.keybig,.why'),0.5,{s:.15,y:18});count(tl,q('#k123')[0],INST.cursos_ge_50,0,0.6,1.2)}});
+
+/* 3 Indicadores */
+SL.push({key:'kpi',kicker:'Indicadores institucionales',fig:`${fmtDec(INST.tasa_reprobacion_pct,2)} %`,
+ title:`Reprobó el ${fmtDec(INST.tasa_reprobacion_pct,2)} % de las matrículas por curso en P1`,
+ sub:`${fmtInt(INST.reprobados)} reprobados sobre ${fmtInt(INST.matriculados_curso)} matrículas por curso.`,
+ notes:`Reprobación P1 es nota inferior a 3,0. La tasa institucional es ${fmtDec(INST.tasa_reprobacion_pct,2)} %: ${fmtInt(INST.reprobados)} reprobados sobre ${fmtInt(INST.matriculados_curso)} matrículas por curso, en ${fmtInt(INST.cursos)} cursos. De ellos, ${INST.cursos_ge_50} están en 50 % o más; ${INST.programas_con_curso_ge_50} programas y ${INST.campus_con_curso_ge_50} campus tienen al menos uno. Nota: la base de estudiantes tiene ${fmtInt(QU.student_rows)} filas y la de grupos suma ${fmtInt(INST.matriculados_curso)} matrículas; el cálculo usa la base de grupos.`,
+ html:function(){const t=(v,l,c)=>`<div class="tile ${c||''}" data-a><span class="num" data-c="${v}">${fmtInt(v)}</span><span>${l}</span></div>`;
+  return head(this.kicker,this.title,this.sub)+`<div class="bd"><div class="donutwrap" data-a role="img" aria-label="Tasa de reprobación ${fmtDec(INST.tasa_reprobacion_pct,2)} %"><svg viewBox="0 0 200 200"><circle class="tr" cx="100" cy="100" r="86"/><circle class="vl" id="dv" cx="100" cy="100" r="86" pathLength="100" stroke-dasharray="100" stroke-dashoffset="${100-INST.tasa_reprobacion_pct}"/></svg><div class="dcenter"><span class="num" id="dn">${fmtDec(INST.tasa_reprobacion_pct,2)} %</span><span>tasa de reprobación institucional</span></div></div><div class="tiles">${t(INST.matriculados_curso,'matrículas por curso')}${t(INST.reprobados,'reprobados (nota inferior a 3,0)')}${t(INST.cursos,'cursos en el corte P1')}${t(INST.cursos_ge_50,'cursos con reprobación ≥ 50 %','hot')}</div></div>`},
+ anim:(tl,q)=>{hdr(tl,q);
+  if(RM){tl.from(q('.donutwrap'),{autoAlpha:0,duration:.2},0.1)}else{tl.from(q('#dv'),{strokeDashoffset:100,duration:1.1,ease:'power4.out'},0.15).from(q('.dcenter'),{autoAlpha:0,duration:.5},0.3)}
+  count(tl,q('#dn')[0],INST.tasa_reprobacion_pct,2,0.2,1.1,' %');
+  rise(tl,q('.tile'),0.3,{s:.09,y:20});
+  q('.tile .num').forEach((el,i)=>{count(tl,el,+el.dataset.c,0,0.4+i*.09,1.1)})}});
+
+/* 4 Campus */
+SL.push({key:'campus',kicker:'Comparativo por campus',fig:`${lead.cursos_ge_50} en ${tc(lead.campus)}`,
+ title:`${tc(lead.campus)} concentra ${lead.cursos_ge_50} de los ${INST.cursos_ge_50} cursos con reprobación ≥ 50 %`,
+ sub:`Es el ${fmtDec(leadShare,0)} % de los cursos priorizados. Más cursos no siempre significa mayor tasa.`,
+ notes:`Por campus: ${campBy.map(c=>`${tc(c.campus)} ${c.cursos_ge_50} cursos ≥ 50 % de ${fmtInt(c.cursos)} (tasa ${fmtDec(c.tasa_reprobacion_pct,2)} %)`).join('; ')}. Las dos columnas de barras tienen escalas distintas: la primera cuenta cursos, la segunda es una tasa en porcentaje.`,
+ html:function(){const mx=lead.cursos_ge_50, tm=15;
+  return head(this.kicker,this.title,this.sub)+`<div class="bd"><div class="rows"><div class="rowhead" data-a><span class="lab">Campus</span><span class="lab al">Cursos con reprobación ≥ 50 %</span><span class="lab dt">Tasa de reprobación del campus</span></div>${campBy.map(c=>`<div class="crow" data-a><div class="nm">${esc(tc(c.campus))}<small>${fmtInt(c.cursos)} cursos · ${fmtInt(c.matriculados_curso)} matrículas</small></div><div class="bcell" data-l="Cursos ≥ 50 %"><div class="track"><i class="fill a" data-b style="width:${c.cursos_ge_50/mx*100}%"></i></div><span class="v al" data-c="${c.cursos_ge_50}" data-d="0">${c.cursos_ge_50}</span></div><div class="bcell" data-l="Tasa"><div class="track"><i class="fill" data-b style="width:${c.tasa_reprobacion_pct/tm*100}%"></i></div><span class="v dt" data-c="${c.tasa_reprobacion_pct}" data-d="2">${fmtDec(c.tasa_reprobacion_pct,2)}</span></div></div>`).join('')}<p class="note" data-a><b>Lectura:</b> ${esc(tc(topRate.campus))} tiene la tasa más alta (${fmtDec(topRate.tasa_reprobacion_pct,2)} %) pero solo ${topRate.cursos_ge_50} cursos ≥ 50 % sobre ${topRate.cursos}. Escala de la tasa: 0 a 15 %.</p></div></div>`},
+ anim:(tl,q)=>{hdr(tl,q);rise(tl,q('.rowhead'),0.1,{y:8});rise(tl,q('.crow'),0.15,{s:.1,y:14});grow(tl,q('[data-b]'),'scaleX',0.3,{s:.05,d:.9});
+  q('[data-c]').forEach((el,i)=>count(tl,el,+el.dataset.c,+el.dataset.d,0.35+i*.05,.9));rise(tl,q('.note'),0.9,{y:8})}});
+
+/* 5 Programas */
+SL.push({key:'prog',kicker:'Programas con más cursos ≥ 50 %',fig:`${top3Sum} en 3 programas`,
+ title:`Tres programas de ${tc(top3[0].campus)} suman ${top3Sum} de los ${INST.cursos_ge_50} cursos`,
+ sub:`${progWith.length} programas tienen al menos un curso con reprobación ≥ 50 %; ${progWithout} no tienen ninguno.`,
+ notes:`Los tres primeros son ${top3.map(r=>tc(r.programa)+' ('+r.cursos_ge_50+')').join(', ')}. La tasa del programa mide todos sus cursos, no solo los críticos. Programas con el mismo nombre en campus distintos (p. ej. Medicina Veterinaria) se muestran por separado.`,
+ html:function(){const mx=prog10[0].cursos_ge_50;
+  return head(this.kicker,this.title,this.sub)+`<div class="bd"><div class="rows" style="gap:6px;width:100%"><div class="prow ph" data-a><span>Programa</span><span></span><span class="r">Cursos</span><span class="r">Tasa</span></div>${prog10.map(r=>`<div class="prow" data-a title="${esc(tc(r.programa))} (${esc(tc(r.campus))}): ${r.cursos_ge_50} de ${r.cursos} cursos"><div class="pn">${esc(tc(r.programa))}<small>${esc(tc(r.campus))}</small></div><div class="track"><i class="fill a" data-b style="width:${r.cursos_ge_50/mx*100}%"></i></div><span class="cnt al" data-c="${r.cursos_ge_50}">${r.cursos_ge_50}</span><span class="rt">${fmtDec(r.tasa_reprobacion_pct,1)} %</span></div>`).join('')}</div></div>`},
+ anim:(tl,q)=>{hdr(tl,q);rise(tl,q('.prow'),0.1,{s:.06,y:12});grow(tl,q('[data-b]'),'scaleX',0.25,{s:.06,d:.8});
+  q('[data-c]').forEach((el,i)=>count(tl,el,+el.dataset.c,0,0.3+i*.06,.8))}});
+
+/* 6 Dispersión */
+const XMAX=40, YMAX=15;
+SL.push({key:'sc',kicker:'Concentración frente a tasa',fig:`${fmtDec(pIdi.tasa_reprobacion_pct,1)} % vs ${fmtDec(pMor.tasa_reprobacion_pct,1)} %`,
+ title:`Más cursos críticos no significa más reprobación: ${tc(pIdi.programa)} suma ${pIdi.cursos_ge_50} con ${fmtDec(pIdi.tasa_reprobacion_pct,1)} %`,
+ notes:`Cada punto es un programa con al menos un curso ≥ 50 % (${progWith.length}). Eje horizontal: tasa de reprobación del programa; eje vertical: número de cursos ≥ 50 %. Idiomas (Bucaramanga) tiene ${pIdi.cursos_ge_50} cursos críticos de ${pIdi.cursos} con tasa ${fmtDec(pIdi.tasa_reprobacion_pct,2)} %; ${tc(pMor.programa)} (${tc(pMor.campus)}) tiene ${pMor.cursos_ge_50} de ${pMor.cursos} con tasa ${fmtDec(pMor.tasa_reprobacion_pct,2)} %. Pasar el cursor por un punto muestra el detalle.`,
+ html:function(){const lab=[prog10[0],pMat,pIdi,pMor];
+  const pts=progWith.map(r=>{const x=r.tasa_reprobacion_pct/XMAX*100,y=r.cursos_ge_50/YMAX*100;const tt=`${tc(r.programa)} (${tc(r.campus)}): ${r.cursos_ge_50} cursos ≥ 50 %, tasa ${fmtDec(r.tasa_reprobacion_pct,1)} %`;
+    const L=lab.indexOf(r)>=0?`<span class="plab ${x>62?'l':'r'}" data-a style="left:${x}%;bottom:${y}%">${esc(tc(r.programa))}</span>`:'';
+    return `<i class="pt" data-p tabindex="0" data-interactive title="${esc(tt)}" aria-label="${esc(tt)}" style="left:${x}%;bottom:${y}%"></i>${L}`}).join('');
+  const gl=[0,5,10,15].map(v=>`<div class="gl" style="bottom:${v/YMAX*100}%"><i>${v}</i></div>`).join('');
+  const tx=[0,10,20,30,40].map(v=>`<span class="tx" style="left:${v/XMAX*100}%">${v} %</span>`).join('');
+  return head(this.kicker,this.title,'')+`<div class="bd"><div class="plotbox" data-a><div class="plot">${gl}${tx}${pts}</div><span class="ax y">Cursos con reprobación ≥ 50 %</span><span class="ax x">Tasa de reprobación del programa</span></div><div class="calls"><div class="call" data-a><span class="num al">${pIdi.cursos_ge_50}</span><p><b>${esc(tc(pIdi.programa))}</b>: ${pIdi.cursos_ge_50} de ${pIdi.cursos} cursos, pero tasa del programa de solo ${fmtDec(pIdi.tasa_reprobacion_pct,1)} %.</p></div><div class="call" data-a><span class="num dt">${fmtDec(pMor.tasa_reprobacion_pct,1)} %</span><p><b>${esc(tc(pMor.programa))}</b> (${esc(tc(pMor.campus))}): tasa más alta entre los ${progWith.length} programas, con ${pMor.cursos_ge_50} de ${pMor.cursos} cursos ≥ 50 %.</p></div></div></div>`},
+ anim:(tl,q)=>{hdr(tl,q);rise(tl,q('.plotbox'),0.1,{y:8});
+  if(RM){tl.from(q('.pt'),{autoAlpha:0,duration:.2},0.2)}else{tl.from(q('.pt'),{scale:0,autoAlpha:0,duration:.5,ease:'back.out(1.6)',stagger:{amount:.7,from:'start'}},0.3)}
+  rise(tl,q('.plab'),0.9,{s:.08,y:4,d:.4});rise(tl,q('.call'),0.5,{s:.15,y:16})}});
+
+/* 7 Distribución */
+SL.push({key:'hist',kicker:'Distribución de los cursos visibles',fig:`${BANDS[0].n} de ${CRIT.length}`,
+ title:`La mitad de los ${CRIT.length} cursos visibles queda entre 50 % y 60 % de reprobación`,
+ sub:`${ge90} superan el 90 %. Se excluyen ${QU.critical_groups_suppressed_lt5} cursos con menos de cinco matriculados.`,
+ notes:`Distribución de las tasas de los ${CRIT.length} cursos públicos (${QU.critical_groups_total} en total menos ${QU.critical_groups_suppressed_lt5} suprimidos por privacidad): ${BANDS.map(b=>`${b.a}-${b.b>100?100:b.b-1} %: ${b.n}`).join('; ')}. Mediana de matriculados por curso: ${median}; ${small15} cursos tienen 15 matriculados o menos, por lo que una tasa alta puede depender de pocas personas.`,
+ html:function(){
+  return head(this.kicker,this.title,this.sub)+`<div class="bd"><div class="hist" data-a role="img" aria-label="Cursos por franja de tasa de reprobación">${BANDS.map((b,i)=>{const h=b.n/bandMax*86;const col=`color-mix(in srgb, var(--alert) ${34+i*16.5}%, var(--bg))`;return `<div class="hcol"><div class="harea"><i class="hbar" data-b style="height:${h}%;background:${col}"></i><span class="hn" data-n style="bottom:calc(${h}% + 8px)"><span data-c="${b.n}">${b.n}</span></span></div><span class="hl">${b.a}–${b.b>100?100:b.b-1} %</span></div>`}).join('')}</div><div class="calls"><div class="call" data-a><span class="num dt">${median}</span><p><b>matriculados por curso</b> es la mediana. ${small15} de ${CRIT.length} cursos tienen 15 o menos.</p></div><p class="note" data-a><b>Lectura:</b> con grupos pequeños, una tasa alta puede depender de pocas personas. Conviene leerla junto con el número de matriculados.</p></div></div>`},
+ anim:(tl,q)=>{hdr(tl,q);rise(tl,q('.hist'),0.1,{y:0,d:.3});grow(tl,q('[data-b]'),'scaleY',0.2,{s:.09,d:.8,origin:'50% 100%'});
+  rise(tl,q('[data-n]'),0.55,{s:.09,y:8,d:.4});q('[data-c]').forEach((el,i)=>count(tl,el,+el.dataset.c,0,0.5+i*.09,.8));
+  rise(tl,q('.call,.note'),0.5,{s:.15,y:14})}});
+
+/* 8 Cursos críticos */
+SL.push({key:'crit',kicker:'Cursos críticos',fig:`${fmtDec(crTop[0].tasa_reprobacion_pct,0)} %`,
+ title:`${ge90} cursos superan el 90 % de reprobación en P1`,
+ sub:`Los ${TOPN} con mayor tasa entre los ${CRIT.length} cursos visibles (mínimo 5 matriculados).`,
+ notes:`Detalle de los ${TOPN} cursos con mayor tasa: ${crTop.map(r=>`${tc(r.materia)} grupo ${r.grupo}, ${tc(r.programa)}, ${tc(r.campus)}: ${r.reprobados} de ${r.matriculados} (${fmtDec(r.tasa_reprobacion_pct,1)} %)`).join('; ')}. El informe no incluye nombres ni identificadores de estudiantes.`,
+ html:function(){return head(this.kicker,this.title,this.sub)+`<div class="bd"><div class="crs">${crTop.map(r=>`<div class="cr" data-a><span class="rate" data-c="${r.tasa_reprobacion_pct}" data-d="${r.tasa_reprobacion_pct%1?1:0}">${fmtDec(r.tasa_reprobacion_pct,r.tasa_reprobacion_pct%1?1:0)} %</span><div class="cm"><span class="cn">${esc(tc(r.materia))} · grupo ${esc(r.grupo)}</span><span class="cmeta">${esc(tc(r.programa))} · ${esc(tc(r.campus))}</span><div class="track"><i class="fill a" data-b style="width:${r.tasa_reprobacion_pct}%"></i></div></div><span class="cs"><b>${r.reprobados} de ${r.matriculados}</b> reprobados<br>promedio ${fmtDec(r.promedio,1)}</span></div>`).join('')}</div></div>`},
+ anim:(tl,q)=>{hdr(tl,q);rise(tl,q('.cr'),0.1,{s:.08,y:12});grow(tl,q('[data-b]'),'scaleX',0.25,{s:.08,d:.9});
+  q('.rate').forEach((el,i)=>{if(RM||!HAS)return;const v=+el.dataset.c,d=+el.dataset.d,o={v:0};el.textContent=fmtDec(0,d)+' %';tl.to(o,{v:v,duration:.9,ease:'power2.out',onUpdate:()=>{el.textContent=fmtDec(o.v,d)+' %'}},0.3+i*.08)})}});
+
+/* 9 Calidad */
+SL.push({key:'q',kicker:'Calidad de datos',fig:`P1 ${QU.p1_coverage_pct} %`,
+ title:`P1 tiene cobertura completa; P2 y P3 aún no existen`,
+ sub:`${fmtInt(QU.student_rows)} filas de estudiante y ${fmtInt(QU.group_rows)} grupos revisados, sin duplicados exactos.`,
+ notes:`Cobertura: P1 ${QU.p1_coverage_pct} %, P2 ${QU.p2_coverage_pct} %, P3 ${QU.p3_coverage_pct} %. Sin filas exactas duplicadas, sin filas P1 inválidas ni faltantes, sin diferencias de fórmula en grupos. Puntos a revisar: ${QU.duplicate_grain_rows} filas con grano duplicado (el informe no explica su causa) y ${QU.groups_below_5} grupos con menos de cinco matriculados, de los cuales ${QU.critical_groups_suppressed_lt5} son cursos críticos suprimidos por privacidad. Hay ${fmtInt(QU.unique_students)} estudiantes únicos.`,
+ html:function(){const cv=(l,v)=>`<div class="cv" data-a><div class="top"><span class="lab">${l}</span><span class="num ${v?'':'dt'}" data-c="${v}">${v} %</span></div><div class="track"><i class="fill ${v?'':'a'}" data-b style="width:${v}%"></i></div><small>${v?'Cobertura completa':'Sin datos en este corte'}</small></div>`;
+  const ck=(n,d,s,c)=>`<div class="chk" data-a><span class="num" ${typeof n==='number'?`data-c="${n}"`:''}>${typeof n==='number'?fmtInt(n):n}</span><span class="d">${d}</span><span class="st ${c}">${s}</span></div>`;
+  return head(this.kicker,this.title,this.sub)+`<div class="bd"><div class="cov">${cv('Corte P1',QU.p1_coverage_pct)}${cv('Corte P2',QU.p2_coverage_pct)}${cv('Corte P3',QU.p3_coverage_pct)}</div><div class="checks">${ck(QU.exact_duplicate_rows,'filas exactas duplicadas','✓ Sin hallazgos','ok')}${ck(QU.group_formula_mismatch_rows,'diferencias de fórmula en grupos','✓ Sin hallazgos','ok')}${ck(QU.invalid_p1_rows+QU.p1_missing_rows,'filas P1 inválidas o faltantes','✓ Sin hallazgos','ok')}${ck(QU.duplicate_grain_rows,'filas con grano duplicado','! Por revisar','wr')}${ck(QU.groups_below_5,'grupos con menos de 5 matriculados','i Privacidad','in')}${ck(QU.critical_groups_suppressed_lt5,`de ${QU.critical_groups_total} cursos críticos suprimidos`,'i Privacidad','in')}</div></div>`},
+ anim:(tl,q)=>{hdr(tl,q);rise(tl,q('.cv'),0.1,{s:.12,y:14});grow(tl,q('[data-b]'),'scaleX',0.3,{s:.12,d:1});
+  q('.cv [data-c]').forEach((el,i)=>{const v=+el.dataset.c;if(RM||!HAS){return}const o={v:0};el.textContent='0 %';tl.to(o,{v:v,duration:1,ease:'power2.out',onUpdate:()=>{el.textContent=Math.round(o.v)+' %'}},0.3+i*.12)});
+  rise(tl,q('.chk'),0.5,{s:.07,y:14});q('.chk [data-c]').forEach((el,i)=>count(tl,el,+el.dataset.c,0,0.55+i*.07,.8))}});
+
+/* 10 Alcance */
+SL.push({key:'scope',kicker:'Alcance, privacidad y cálculo',fig:'Alcance',
+ title:'Son alertas tempranas, sin datos personales y con una regla de cálculo simple',
+ notes:'Los tres textos son los del informe. Alcance: resultados 2026-2 al corte P1. Privacidad: sin nombres ni identificadores y con supresión de cursos de menos de cinco matriculados. Cálculo: reprobación es nota inferior a 3,0; tasa = reprobados / matriculados en la base de grupos.',
+ html:function(){const ic=[ICON.scope,ICON.priv,ICON.calc];
+  return head(this.kicker,this.title,'')+`<div class="bd">${FLOW.map((f,i)=>`<div class="sc" data-a>${ic[i]||''}<h3>${esc(f.title)}</h3><p>${esc(f.detail)}</p>${i===0?`<div class="files">${FILES.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}</div>`).join('')}</div>`},
+ anim:(tl,q)=>{hdr(tl,q);rise(tl,q('.sc'),0.15,{s:.14,y:22,d:.7});if(!RM)tl.from(q('.sc svg'),{scale:.6,duration:.6,ease:'back.out(1.8)',stagger:.14,transformOrigin:'50% 50%'},0.35)}});
+
+/* 11 Cierre */
+SL.push({key:'end',kicker:'Próximos pasos',fig:'P2',
+ title:'Antes de decidir, confirmar en P2 si las alertas se sostienen',
+ notes:'Los tres primeros puntos se derivan directamente del dato (cobertura de P2 y P3, filas con grano duplicado, cursos suprimidos). Los otros dos son sugerencias del equipo de análisis: el dato no las exige y deben validarse con las coordinaciones académicas antes de comunicarse como decisiones.',
+ html:function(){return head(this.kicker,this.title,'')+`<div class="bd"><div class="col" data-a><h3>Se derivan del dato</h3><ol><li data-a><b>Repetir el análisis con P2 y P3.</b><small>Hoy tienen ${QU.p2_coverage_pct} % de cobertura; P1 es solo una alerta temprana.</small></li><li data-a><b>Aclarar las ${fmtInt(QU.duplicate_grain_rows)} filas con grano duplicado</b> antes de una versión definitiva.<small>Los controles no encontraron duplicados exactos.</small></li><li data-a><b>Tener presente que ${QU.critical_groups_suppressed_lt5} cursos críticos no se muestran</b> por tener menos de cinco matriculados.<small>El total de ${QU.critical_groups_total} cursos ≥ 50 % sí los incluye.</small></li></ol></div><div class="col sug" data-a><h3>Sugerencias, no provienen del dato</h3><ol><li data-a><b>Revisar primero ${esc(tc(lead.campus))} y sus tres programas líderes</b> con las coordinaciones.<small>Concentran ${lead.cursos_ge_50} de ${INST.cursos_ge_50} cursos ≥ 50 %.</small></li><li data-a><b>Contrastar los ${ge90} cursos sobre 90 %</b> con cada programa antes de sacar conclusiones.<small>Son grupos pequeños y la tasa cambia con pocas personas.</small></li></ol></div></div>`},
+ anim:(tl,q)=>{hdr(tl,q);rise(tl,q('.col'),0.15,{s:.15,y:16});rise(tl,q('li'),0.35,{s:.12,y:14})}});
+
+const N=SL.length;
+
+/* ================= Construcción del DOM ================= */
+const stage=$('#stage'), vp=$('#viewport'), main=$('#main'), root=document.documentElement;
+SL.forEach((d,i)=>{const el=document.createElement('section');el.className='slide s-'+d.key;el.setAttribute('aria-label',`Diapositiva ${i+1} de ${N}: ${d.title}`);el.setAttribute('aria-roledescription','diapositiva');el.setAttribute('aria-hidden','true');el.innerHTML=d.html();stage.appendChild(el);d.el=el;d.tl=null});
+dotCv=$('#dotcv');
+const cardsEl=$('#cards');
+SL.forEach((d,i)=>{const b=document.createElement('button');b.type='button';b.className='card';b.dataset.i=i;b.innerHTML=`<span class="n">${String(i+1).padStart(2,'0')}</span><span class="k">${esc(d.kicker)}</span><span class="t">${esc(d.title)}</span><span class="f">${esc(d.fig)}</span>`;b.addEventListener('click',()=>{closeOv();go(i)});cardsEl.appendChild(b)});
+
+/* ================= Lienzo de puntos ================= */
+let printing=false, S=1;
+function cssCol(n){return getComputedStyle(root).getPropertyValue(n).trim()}
+function sizeCanvas(){if(!dotCv)return;const w=dotCv.clientWidth,h=dotCv.clientHeight;if(!w||!h)return;const k=Math.max(1,S*(window.devicePixelRatio||1)*(printing?2:1));dotCv.width=Math.round(w*k);dotCv.height=Math.round(h*k);drawDots()}
+function drawDots(){const c=dotCv;if(!c)return;const w=c.clientWidth,h=c.clientHeight;if(!w||!h||!c.width)return;const ctx=c.getContext('2d'),k=c.width/w;ctx.setTransform(k,0,0,k,0,0);ctx.clearRect(0,0,w,h);
+  const n=INST.cursos,H=INST.cursos_ge_50,cols=Math.max(1,Math.round(Math.sqrt(n*w/h))),rows=Math.ceil(n/cols),cell=Math.min(w/cols,h/rows),r=cell*.36,ox=(w-cell*cols)/2,oy=(h-cell*rows)/2;
+  const cd=printing?'#B7C2CA':cssCol('--dot'),ca=printing?'#B3261E':cssCol('--alert'),vis=dots.reveal*(n+40),tau=Math.PI*2;
+  for(let i=0;i<n;i++){const a=clamp(0,1,(vis-i)/40);if(a<=0)break;const x=ox+(i%cols+.5)*cell,y=oy+(Math.floor(i/cols)+.5)*cell;
+    ctx.globalAlpha=a;ctx.fillStyle=cd;ctx.beginPath();ctx.arc(x,y,r,0,tau);ctx.fill();
+    if(i<H&&dots.hot>0){ctx.globalAlpha=a*dots.hot;ctx.fillStyle=ca;ctx.beginPath();ctx.arc(x,y,r*(1+.25*dots.hot),0,tau);ctx.fill()}}
+  ctx.globalAlpha=1}
+
+/* ================= Escalado 16:9 / vertical ================= */
+let portrait=false, nh=0;
+function layout(force){const vw=vp.clientWidth,vh=vp.clientHeight;if(!vw||!vh)return;
+  const p=vw/vh<1;let W,H;if(p){W=640;H=clamp(900,1500,Math.round(640*vh/vw))}else{W=1280;H=720}
+  S=Math.min(vw/W,vh/H);const ox=(vw-W*S)/2,oy=(vh-H*S)/2;
+  stage.style.width=W+'px';stage.style.height=H+'px';stage.style.transform=`translate(${ox}px,${oy}px) scale(${S})`;
+  if(p!==portrait||force){portrait=p;root.classList.toggle('portrait',p);return true}return false}
+let rz=0;function onResize(){cancelAnimationFrame(rz);rz=requestAnimationFrame(()=>{layout();sizeCanvas()})}
+if('ResizeObserver' in window){new ResizeObserver(onResize).observe(vp)}else{addEventListener('resize',onResize)}
+
+/* ================= Navegación ================= */
+let cur=-1, ovOpen=false, notesOpen=false;
+const bar=$('#progress i'), count$=$('#count'), live=$('#live');
+const show=(el,v)=>{if(HAS)gsap.set(el,{autoAlpha:v});else{el.style.visibility=v?'visible':'hidden';el.style.opacity=v}};
+const vis=el=>HAS?gsap.getProperty(el,'autoAlpha'):(el.style.visibility==='visible'?1:0);
+function hide(d){show(d.el,0);if(HAS)gsap.set(d.el,{x:0});d.el.setAttribute('aria-hidden','true');if(d.tl)d.tl.pause(0)}
+function go(n,o){o=o||{};n=clamp(0,N-1,n);if(n===cur&&!o.force)return;
+  const from=cur>=0?SL[cur]:null,to=SL[n],dir=n>cur?1:-1;
+  if(HAS){SL.forEach((d,i)=>{if(i!==cur&&i!==n&&vis(d.el)>0){gsap.killTweensOf(d.el);hide(d)}});}else{SL.forEach(hide)}
+  if(from&&from!==to){if(from.tl)from.tl.pause();from.el.setAttribute('aria-hidden','true');
+    if(HAS){gsap.to(from.el,{autoAlpha:0,x:(RM?0:-dir*36),duration:RM?.15:.26,ease:'power3.out',overwrite:true,onComplete:()=>{if(cur!==SL.indexOf(from))hide(from)}})}}
+  cur=n;to.el.setAttribute('aria-hidden','false');
+  const v=vis(to.el),wasVisible=v>.05;
+  if(HAS){gsap.killTweensOf(to.el);if(!wasVisible)gsap.set(to.el,{x:RM?0:dir*48});
+    gsap.to(to.el,{autoAlpha:1,x:0,duration:RM?.2:.5,ease:'power4.out',overwrite:true});
+    if(to.tl){if(o.initial||!wasVisible||to.tl.progress()===0)to.tl.restart();else to.tl.play()}}
+  else{show(to.el,1)}
+  count$.textContent=`${n+1} / ${N}`;
+  if(HAS)gsap.to(bar,{scaleX:(n+1)/N,duration:RM?.01:.5,ease:'power4.out',overwrite:true});else bar.style.transform=`scaleX(${(n+1)/N})`;
+  live.textContent=`Diapositiva ${n+1} de ${N}: ${to.title}`;
+  $('#bPrev').disabled=n===0;$('#bNext').disabled=n===N-1;$('#bPrev').style.opacity=n===0?.35:1;$('#bNext').style.opacity=n===N-1?.35:1;
+  cardsEl.querySelectorAll('.card').forEach((c,i)=>c.setAttribute('aria-current',i===n?'true':'false'));
+  updateNotes();
+  try{history.replaceState(null,'','#'+(n+1))}catch(e){}
+}
+const next=()=>go(cur+1), prev=()=>go(cur-1);
+$('#bNext').addEventListener('click',next);$('#bPrev').addEventListener('click',prev);
+
+/* Notas */
+const notesEl=$('#notes'); let t0=0,tmr=0;
+function updateNotes(){$('#noteText').textContent=SL[cur].notes;const nx=SL[cur+1];$('#nextUp').textContent=nx?('Siguiente: '+nx.kicker):'Última diapositiva'}
+function tick(){const s=Math.floor((Date.now()-t0)/1000);$('#timer').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function toggleNotes(){notesOpen=!notesOpen;$('#bNotes').setAttribute('aria-pressed',String(notesOpen));
+  const target=notesOpen?Math.round(clamp(120,220,window.innerHeight*.26)):0;
+  if(notesOpen){if(!t0)t0=Date.now();tick();tmr=setInterval(tick,1000);notesEl.style.visibility='visible'}else{clearInterval(tmr)}
+  const st={h:nh};
+  const apply=()=>{nh=st.h;notesEl.style.height=nh+'px';main.style.bottom=nh+'px';layout()};
+  if(HAS&&!RM){gsap.to(st,{h:target,duration:.35,ease:'power4.out',overwrite:true,onUpdate:apply,onComplete:()=>{apply();if(!notesOpen)notesEl.style.visibility='hidden';sizeCanvas()}})}
+  else{st.h=target;apply();if(!notesOpen)notesEl.style.visibility='hidden';sizeCanvas()}}
+$('#bNotes').addEventListener('click',toggleNotes);
+
+/* Índice con Flip */
+const ov=$('#overview');
+function openOv(){if(ovOpen)return;ovOpen=true;ov.style.visibility='visible';
+  if(HAS){gsap.killTweensOf(ov);gsap.to(ov,{autoAlpha:1,duration:RM?.1:.2,ease:'power3.out'});
+    if(!RM&&window.Flip){gsap.registerPlugin(window.Flip);const cs=[...cardsEl.children];cardsEl.classList.add('stack');const st=Flip.getState(cs);cardsEl.classList.remove('stack');Flip.from(st,{duration:.55,ease:'power4.out',stagger:.03,overwrite:true})}}
+  else{ov.style.opacity=1}
+  const c=cardsEl.children[cur];if(c)c.focus({preventScroll:false})}
+function closeOv(){if(!ovOpen)return;ovOpen=false;
+  if(HAS){gsap.killTweensOf(ov);gsap.to(ov,{autoAlpha:0,duration:.18,ease:'power3.out'})}else{ov.style.opacity=0;ov.style.visibility='hidden'}
+  vp.focus({preventScroll:true})}
+$('#bOv').addEventListener('click',()=>ovOpen?closeOv():openOv());$('#ovClose').addEventListener('click',closeOv);
+
+/* Pantalla completa, tema, aviso */
+const toastEl=$('#toast');let toastT;
+function toast(msg,ms){toastEl.textContent=msg;if(HAS){gsap.killTweensOf(toastEl);gsap.fromTo(toastEl,{autoAlpha:0,y:RM?0:8},{autoAlpha:1,y:0,duration:.25,ease:'power3.out'});clearTimeout(toastT);toastT=setTimeout(()=>gsap.to(toastEl,{autoAlpha:0,duration:.25}),ms||2600)}}
+function fs(){try{if(document.fullscreenElement){document.exitFullscreen()}else{const p=root.requestFullscreen&&root.requestFullscreen();if(p&&p.catch)p.catch(()=>toast('Pantalla completa no disponible en este visor'));else toast('Pantalla completa no disponible en este visor')}}catch(e){toast('Pantalla completa no disponible en este visor')}}
+$('#bFs').addEventListener('click',fs);
+function toggleTheme(){const dark=root.getAttribute('data-theme')?root.getAttribute('data-theme')==='dark':matchMedia('(prefers-color-scheme: dark)').matches;const nx=dark?'light':'dark';root.setAttribute('data-theme',nx);try{localStorage.setItem('udes-pres-theme',nx)}catch(e){}requestAnimationFrame(drawDots)}
+try{const sv=localStorage.getItem('udes-pres-theme');if(sv)root.setAttribute('data-theme',sv)}catch(e){}
+$('#bTheme').addEventListener('click',toggleTheme);
+
+/* Teclado */
+document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key;
+  if(ovOpen){if(k==='Escape'||k==='o'||k==='O'){e.preventDefault();closeOv()}
+    else if(/^Arrow/.test(k)){e.preventDefault();const cs=[...cardsEl.children];let i=cs.indexOf(document.activeElement);if(i<0)i=cur;const cols=getComputedStyle(cardsEl).gridTemplateColumns.split(' ').length||1;
+      i=clamp(0,cs.length-1,i+(k==='ArrowRight'?1:k==='ArrowLeft'?-1:k==='ArrowDown'?cols:-cols));cs[i].focus()}
+    return}
+  const onBtn=e.target&&e.target.closest&&e.target.closest('button');if(onBtn&&(k==='Enter'||k===' '))return;
+  switch(k){
+    case 'ArrowRight':case 'ArrowDown':case 'PageDown':case ' ':case 'Enter':e.preventDefault();next();break;
+    case 'ArrowLeft':case 'ArrowUp':case 'PageUp':case 'Backspace':e.preventDefault();prev();break;
+    case 'Home':e.preventDefault();go(0);break;case 'End':e.preventDefault();go(N-1);break;
+    case 'o':case 'O':e.preventDefault();openOv();break;
+    case 'f':case 'F':e.preventDefault();fs();break;
+    case 'n':case 'N':e.preventDefault();toggleNotes();break;
+    case 't':case 'T':e.preventDefault();toggleTheme();break;
+  }});
+
+/* Clic/tap y deslizamiento con seguimiento 1:1 */
+let drag=null,noClick=false;
+vp.addEventListener('pointerdown',e=>{if(ovOpen||e.button>0)return;drag={id:e.pointerId,x:e.clientX,y:e.clientY,t:e.timeStamp,dx:0,dy:0,mode:null,type:e.pointerType,vx:0,lx:e.clientX,lt:e.timeStamp}});
+vp.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;drag.dx=e.clientX-drag.x;drag.dy=e.clientY-drag.y;
+  const dt=e.timeStamp-drag.lt;if(dt>0){drag.vx=(e.clientX-drag.lx)/dt;drag.lx=e.clientX;drag.lt=e.timeStamp}
+  if(!drag.mode&&Math.hypot(drag.dx,drag.dy)>10){drag.mode=Math.abs(drag.dx)>=Math.abs(drag.dy)?'x':'y';if(drag.type!=='mouse'){try{vp.setPointerCapture(e.pointerId)}catch(_){}}}
+  if(drag.mode==='x'&&drag.type!=='mouse'&&HAS&&!RM){let dx=drag.dx;const edge=(cur===0&&dx>0)||(cur===N-1&&dx<0);if(edge)dx*=.3;
+    gsap.killTweensOf(SL[cur].el,'x');gsap.set(SL[cur].el,{x:dx/S,autoAlpha:1-Math.min(.5,Math.abs(dx)/vp.clientWidth)})}});
+function endDrag(e,cancel){if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;
+  const w=vp.clientWidth,h=vp.clientHeight;let fired=false;
+  if(!cancel&&d.mode==='x'){const v=d.vx;if(Math.abs(d.dx)>w*.16||Math.abs(v)>.5){if(d.dx<0&&cur<N-1){next();fired=true}else if(d.dx>0&&cur>0){prev();fired=true}}}
+  else if(!cancel&&d.mode==='y'&&portrait&&d.type!=='mouse'&&Math.abs(d.dy)>h*.14){if(d.dy<0)next();else prev();fired=true}
+  if(d.mode){noClick=true;setTimeout(()=>{noClick=false},60);
+    if(!fired&&HAS)gsap.to(SL[cur].el,{x:0,autoAlpha:1,duration:RM?.1:.45,ease:'power4.out',overwrite:true})}}
+vp.addEventListener('pointerup',e=>endDrag(e,false));vp.addEventListener('pointercancel',e=>endDrag(e,true));
+vp.addEventListener('click',e=>{if(noClick||ovOpen)return;if(e.target.closest('[data-interactive]'))return;const r=vp.getBoundingClientRect();(e.clientX-r.left)<r.width*.28?prev():next()});
+
+/* Cromo que se oculta en reposo (solo con puntero) */
+const chrome=$('#chrome');let idle;function wake(){chrome.classList.remove('idle');clearTimeout(idle);if(matchMedia('(hover:hover)').matches&&!ovOpen)idle=setTimeout(()=>chrome.classList.add('idle'),3200)}
+['pointermove','pointerdown','keydown','touchstart'].forEach(ev=>addEventListener(ev,wake,{passive:true}));
+
+/* ================= Impresión ================= */
+addEventListener('beforeprint',()=>{printing=true;root.classList.remove('portrait');
+  SL.forEach(d=>{if(d.tl)d.tl.progress(1)});dots.reveal=1;dots.hot=1;void stage.offsetWidth;sizeCanvas()});
+addEventListener('afterprint',()=>{printing=false;layout(true);sizeCanvas();SL.forEach((d,i)=>{if(i!==cur)hide(d)})});
+
+/* ================= Movimiento con matchMedia (prefers-reduced-motion) ================= */
+function buildTimelines(){
+  SL.forEach(d=>{if(d.tl){d.tl.kill();d.tl=null}});
+  if(!HAS)return;
+  SL.forEach(d=>{const tl=gsap.timeline({paused:true,defaults:{ease:'power4.out'}});d.anim(tl,gsap.utils.selector(d.el));d.tl=tl});
+}
+if(HAS){
+  if(window.Flip)gsap.registerPlugin(window.Flip);
+  const mm=gsap.matchMedia();
+  mm.add({reduce:'(prefers-reduced-motion: reduce)',full:'(prefers-reduced-motion: no-preference)'},ctx=>{
+    RM=!!ctx.conditions.reduce;
+    buildTimelines();
+    if(cur>=0){SL.forEach((d,i)=>{if(!d.tl)return;if(i===cur)d.tl.progress(1);else d.tl.progress(0)})}
+    return()=>{};
+  });
+}
+layout(true);
+if(!HAS){SL.forEach(d=>{d.tl=null})}
+const start=parseInt((location.hash||'').replace('#',''),10);
+go(isNaN(start)?0:clamp(0,N-1,start-1),{initial:true,force:true});
+sizeCanvas();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{sizeCanvas()});
+wake();
+setTimeout(()=>toast('← → o espacio: navegar · O: índice · F: pantalla completa · N: notas',4200),900);
+})();
+</script>
