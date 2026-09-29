@@ -204,6 +204,7 @@ tr{break-inside:avoid}
   .page{transform:none;height:calc(var(--phpx) * 1px - 1px);break-inside:avoid}
   :root{print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }
+.cover .logo{display:block;height:5.2em;width:auto;margin:0 0 .8em}
 </style>
 
 <div class="app">
@@ -325,11 +326,11 @@ var SEC_NAMES = {resumen:'Resumen ejecutivo',campus:'Por campus',programas:'Por 
 
 var TBL = {
   campus:{label:'Campus',title:'Indicadores por campus',cols:[
-    {k:'campus',l:'Campus',t:'campus'},{k:'cursos',l:'Cursos',t:'int'},{k:'matriculados_curso',l:'Matriculados',t:'int'},
+    {k:'campus',l:'Campus',t:'campus'},{k:'cursos',l:'Cursos',t:'int'},{k:'matriculados_curso',l:'Matriculados por curso',t:'int'},
     {k:'reprobados',l:'Reprobados',t:'int'},{k:'cursos_ge_50',l:'Cursos ≥ 50 %',t:'int',b:1},{k:'tasa_reprobacion_pct',l:'Tasa de reprobación %',t:'pct'}],
     def:null, ns:null, sort:'cursos_ge_50', dir:'desc', n:'all'},
   programas:{label:'Programas',title:'Programas con cursos de reprobación ≥ 50 %',cols:[
-    {k:'campus',l:'Campus',t:'campus'},{k:'programa',l:'Programa',t:'prog'},{k:'cursos',l:'Cursos',t:'int'},{k:'matriculados_curso',l:'Matriculados',t:'int'},
+    {k:'campus',l:'Campus',t:'campus'},{k:'programa',l:'Programa',t:'prog'},{k:'cursos',l:'Cursos',t:'int'},{k:'matriculados_curso',l:'Matriculados por curso',t:'int'},
     {k:'reprobados',l:'Reprobados',t:'int'},{k:'cursos_ge_50',l:'Cursos ≥ 50 %',t:'int',b:1},{k:'tasa_reprobacion_pct',l:'Tasa de reprobación %',t:'pct'}],
     def:null, ns:['10','20','40','all'], sort:'cursos_ge_50', dir:'desc', n:'20'},
   cursos:{label:'Cursos críticos',title:'Cursos con reprobación ≥ 50 %',cols:[
@@ -551,7 +552,7 @@ function buildBlocks(){
 function coverHtml(){
   var a = agg(), sel_ = S.sections.filter(function(s){return s.on}).map(function(s){return SEC_NAMES[s.id]});
   var fig = function(v,l){return '<div><div class="v">'+v+'</div><div class="l">'+l+'</div></div>'};
-  return '<div class="cover"><div class="top"><div class="inst">Universidad de Santander</div><div class="per">Periodo 2026-2 · Corte P1 (alertas tempranas)</div></div>'+
+  return '<div class="cover"><div class="top"><img class="logo" src="public/logo-udes.png" alt="Universidad de Santander UDES, vigilada Mineducación, SNIES 2832"><div class="per">Periodo 2026-2 · Corte P1 (alertas tempranas)</div></div>'+
     '<div class="mid"><h1>Mapa de riesgo académico</h1><div class="sub">Cursos con reprobación ≥ 50 %</div>'+
     '<div class="figs">'+fig(fInt(a.ge50),'cursos con reprobación ≥ 50 %')+fig(fInt(a.progs),'programas con al menos uno')+fig(fInt(a.campus),a.campus===1?'campus':'campus')+'</div></div>'+
     '<div class="bot"><div><strong>Campus:</strong> '+esc(selLabel())+'</div><div><strong>Contenido:</strong> '+esc(sel_.join(', ')||'sin secciones')+'</div><div><strong>Datos al</strong> '+esc(fDate(ASOF))+'. Sin nombres ni identificadores estudiantiles.</div><div><strong>Fuente:</strong> '+PV.sources.map(function(s){return esc(s.system)}).join(' y ')+' · descarga '+esc(PV.downloadLabel)+'</div><div><strong>Elaborado por</strong> '+esc(PV.author)+' · '+esc(PV.email)+' · '+esc(PV.url.replace('https://',''))+'</div></div></div>';

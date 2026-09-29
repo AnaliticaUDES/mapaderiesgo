@@ -208,12 +208,16 @@ footer{padding-block:36px 48px;font-size:13px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){
   .chip,.iconbtn,.morebtn,.row,tbody tr{transition:none}
 }
+.brand-logo{display:block;height:56px;width:auto;margin:0 0 22px;box-sizing:content-box}
+:root[data-theme="dark"] .brand-logo{background:#fff;padding:6px 12px;border-radius:8px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brand-logo{background:#fff;padding:6px 12px;border-radius:8px}}
 </style>
 
 <a class="skip" href="#main">Saltar al contenido</a>
 
 <header class="hero">
   <div class="wrap">
+    <img class="brand-logo" src="public/logo-udes.png" alt="Universidad de Santander UDES, vigilada Mineducación, SNIES 2832" width="156" height="56">
     <div class="eyebrow"><span>Universidad de Santander</span><i class="sep"></i><span>Periodo 2026-2</span><i class="sep"></i><span>Corte P1</span><i class="sep"></i><span id="asof"></span></div>
     <h1 id="title">Mapa de Riesgo Académico</h1>
     <p class="question" id="question"></p>
