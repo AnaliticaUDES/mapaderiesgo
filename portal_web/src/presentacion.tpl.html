@@ -306,6 +306,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance}
     <button id="bOv" type="button" aria-label="Índice de diapositivas" title="Índice (O)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1"/></svg></button>
     <button id="bNotes" type="button" aria-label="Notas del presentador" aria-pressed="false" title="Notas (N)"><svg viewBox="0 0 24 24"><path d="M5 4h14v12H9l-4 4z"/><path d="M9 8h6M9 12h4"/></svg></button>
     <button id="bFs" type="button" aria-label="Pantalla completa" title="Pantalla completa (F)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button id="bPdf" type="button" aria-label="Descargar PDF" title="Descargar PDF (guardar como PDF en el diálogo de impresión)"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg></button>
     <button id="bTheme" type="button" aria-label="Cambiar tema claro u oscuro" title="Tema (T)"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
   </nav>
   <div id="toast" role="status"></div>
@@ -591,6 +592,7 @@ const toastEl=$('#toast');let toastT;
 function toast(msg,ms){toastEl.textContent=msg;if(HAS){gsap.killTweensOf(toastEl);gsap.fromTo(toastEl,{autoAlpha:0,y:RM?0:8},{autoAlpha:1,y:0,duration:.25,ease:'power3.out'});clearTimeout(toastT);toastT=setTimeout(()=>gsap.to(toastEl,{autoAlpha:0,duration:.25}),ms||2600)}}
 function fs(){try{if(document.fullscreenElement){document.exitFullscreen()}else{const p=root.requestFullscreen&&root.requestFullscreen();if(p&&p.catch)p.catch(()=>toast('Pantalla completa no disponible en este visor'));else toast('Pantalla completa no disponible en este visor')}}catch(e){toast('Pantalla completa no disponible en este visor')}}
 $('#bFs').addEventListener('click',fs);
+$('#bPdf').addEventListener('click',()=>{toast('En el diálogo de impresión elige “Guardar como PDF”');setTimeout(()=>window.print(),350)});
 function toggleTheme(){const dark=root.getAttribute('data-theme')?root.getAttribute('data-theme')==='dark':matchMedia('(prefers-color-scheme: dark)').matches;const nx=dark?'light':'dark';root.setAttribute('data-theme',nx);try{localStorage.setItem('udes-pres-theme',nx)}catch(e){}requestAnimationFrame(drawDots)}
 try{const sv=localStorage.getItem('udes-pres-theme');if(sv)root.setAttribute('data-theme',sv)}catch(e){}
 $('#bTheme').addEventListener('click',toggleTheme);

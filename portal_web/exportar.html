@@ -287,7 +287,7 @@ tr{break-inside:avoid}
     <details class="g">
       <summary>Nota de implementación</summary>
       <div class="gb impl">
-        <p>Este prototipo solo simula la exportación: el sandbox del artifact bloquea las descargas. En el proyecto real:</p>
+        <p>Cómo funciona la exportación:</p>
         <h4>PDF (recomendado)</h4>
         <p>Renderizar la misma hoja en la página y llamar a <code>window.print()</code> con <code>@page</code> y CSS de impresión. Mantiene texto vectorial, SVG nítidos y encabezados de tabla repetidos (<code>thead{display:table-header-group}</code>). Alinear con <code>src/print.css</code>: margen 12 mm y <code>print-color-adjust:exact</code>. El pie con "Página X de N" en impresión nativa usa <code>@page</code> con cajas de margen (<code>@bottom-right</code>) en Chromium; para otros motores, usar paginación propia como aquí.</p>
         <pre class="code" id="pageRule"></pre>
@@ -742,19 +742,78 @@ $('btnExport').addEventListener('click',function(){
   var ts = tableSections();
   function dims(id){var st=S.tables[id];return fInt(shownRows(id).length)+' filas × '+st.cols.length+' columnas'}
   if(S.out.csv){
-    if(!ts.length) items.push('<strong>CSV</strong>: ninguna tabla seleccionada, no se generaría archivo.');
+    if(!ts.length) items.push('<strong>CSV</strong>: ninguna tabla seleccionada, no se genera archivo.');
     else items.push('<strong>CSV</strong> ('+ts.length+(ts.length===1?' archivo':' archivos')+'): '+ts.map(function(id){return esc(TBL[id].label)+' ('+dims(id)+')'}).join('; ')+'. UTF-8 con BOM.');
   }
   if(S.out.xlsx){
-    if(!ts.length) items.push('<strong>XLSX</strong>: ninguna tabla seleccionada, no se generaría archivo.');
+    if(!ts.length) items.push('<strong>XLSX</strong>: ninguna tabla seleccionada, no se genera archivo.');
     else items.push('<strong>XLSX</strong> (1 libro): hojas '+ts.map(function(id){return esc(TBL[id].label)+' ('+dims(id)+')'}).join('; ')+' y una hoja de notas de alcance, privacidad y cálculo.');
   }
   items.push('Filtro de campus: '+esc(selLabel())+'. Cursos con menos de 5 matriculados: suprimidos; sin nombres ni identificadores estudiantiles.');
   var r = $('result');
-  r.innerHTML = '<h3>Resumen de la exportación</h3><p class="sim">Simulación: el sandbox del artifact bloquea las descargas, por eso no se crea ningún archivo.</p><ul>'+items.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul><p class="hint">En el proyecto real: <code>window.print()</code> con <code>@page</code> para el PDF y SheetJS para el XLSX (detalle en “Nota de implementación”).</p>';
+  r.innerHTML = '<h3>Resumen de la exportación</h3><p class="sim">Descargas iniciadas. Para el PDF se abre el diálogo de impresión: elige “Guardar como PDF”.</p><ul>'+items.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul>';
   r.hidden=false; r.classList.remove('in'); void r.offsetWidth; r.classList.add('in');
   r.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+  runExports(ts);
 });
+
+/* ---------- exportación real ---------- */
+var FILEBASE = 'mapa-riesgo-2026-2-P1';
+function expCols(id){var keep = S.tables[id].cols; return TBL[id].cols.filter(function(c){return keep.indexOf(c.k)>-1})}
+function expValue(c,r,forCsv){
+  var v = r[c.k];
+  if(v==null) return '';
+  if(c.t==='campus') return cn(v);
+  if(c.t==='pct'||c.t==='dec') return forCsv ? String(v).replace('.',',') : Number(v);
+  if(c.t==='int') return Number(v);
+  return v;
+}
+function csvCell(x){x = String(x); var nl = /[;"]/.test(x) || x.indexOf(String.fromCharCode(10))>-1 || x.indexOf(String.fromCharCode(13))>-1; return nl ? '"'+x.replace(/"/g,'""')+'"' : x}
+function download(name,blob){
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
+}
+function csvFor(id){
+  var cols = expCols(id), rows = shownRows(id);
+  var lines = [cols.map(function(c){return csvCell(c.l)}).join(';')].concat(rows.map(function(r){return cols.map(function(c){return csvCell(expValue(c,r,true))}).join(';')}));
+  return '﻿'+lines.join('\r\n');
+}
+function notesRows(){
+  var rows = [['Concepto','Detalle']];
+  FLOW.forEach(function(f){rows.push([f.title,f.detail])});
+  PV.sources.forEach(function(s){rows.push(['Fuente: '+s.system,s.name])});
+  rows.push(['Fecha de descarga',PV.downloadLabel],['Elaborado por',PV.author],['Correo',PV.email],['Teléfono',PV.phone],['Ciudad',PV.city],['Sitio web',PV.url],
+    ['Filtro de campus',selLabel()],['Datos al',fDate(ASOF)]);
+  return rows;
+}
+function loadSheetJS(cb){
+  if(window.XLSX) return cb();
+  var s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload = cb; s.onerror = function(){toastMsg('No se pudo cargar la librería XLSX (¿sin conexión?). Prueba con CSV.')};
+  document.head.appendChild(s);
+}
+function toastMsg(t){var r=$('result'); r.insertAdjacentHTML('beforeend','<p class="hint">'+esc(t)+'</p>')}
+function runExports(ts){
+  if(S.out.csv && ts.length){
+    ts.forEach(function(id,i){setTimeout(function(){download(FILEBASE+'_'+id+'.csv',new Blob([csvFor(id)],{type:'text/csv;charset=utf-8'}))},i*450)});
+  }
+  if(S.out.xlsx && ts.length){
+    loadSheetJS(function(){
+      var wb = XLSX.utils.book_new();
+      ts.forEach(function(id){
+        var cols = expCols(id), rows = shownRows(id);
+        var aoa = [cols.map(function(c){return c.l})].concat(rows.map(function(r){return cols.map(function(c){return expValue(c,r,false)})}));
+        var ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws['!cols'] = cols.map(function(c){return {wch:c.t==='txt'||c.t==='prog'?38:16}});
+        XLSX.utils.book_append_sheet(wb,ws,TBL[id].label.slice(0,31));
+      });
+      var wn = XLSX.utils.aoa_to_sheet(notesRows()); wn['!cols'] = [{wch:34},{wch:110}];
+      XLSX.utils.book_append_sheet(wb,wn,'Notas');
+      XLSX.writeFile(wb,FILEBASE+'.xlsx');
+    });
+  }
+  if(S.out.pdf) setTimeout(function(){window.print()},(S.out.csv&&ts.length?ts.length*450:0)+400);
+}
 
 /* ---------- arranque ---------- */
 renderSecList(); renderCampus(); renderTabs(); renderTblCfg(); render();
