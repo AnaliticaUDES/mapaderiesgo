@@ -309,6 +309,7 @@ var ALL_CAMPUS = D.campus.rows.map(function(r){return r.campus});
 var INST = D.institutional.rows[0];
 var Q = D.quality.rows[0];
 var FLOW = D.institutional.source.evidenceFlow;
+var PV = D.report.provenance;
 var ASOF = D.report.asOf;
 var SEC_NAMES = {resumen:'Resumen ejecutivo',campus:'Por campus',programas:'Por programa',cursos:'Cursos críticos',notas:'Notas de alcance, privacidad y cálculo'};
 
@@ -488,7 +489,8 @@ function blkNotas(){
     p('Cobertura de P1',fDec(Q.p1_coverage_pct,0)+' %')+p('Cobertura de P2 y P3',fDec(Q.p2_coverage_pct,0)+' % y '+fDec(Q.p3_coverage_pct,0)+' %')+
     p('Grupos con menos de 5 matriculados',fInt(Q.groups_below_5))+
     p('Cursos ≥ 50 %: con detalle / suprimidos / total',fInt(Q.critical_groups_public)+' / '+fInt(Q.critical_groups_suppressed_lt5)+' / '+fInt(Q.critical_groups_total))+'</dl>'+
-   '<p class="tnote">Fuente: '+esc(D.institutional.source.label)+' ('+D.institutional.source.files.map(esc).join(', ')+'). Datos al '+esc(fDate(ASOF))+'.</p>';
+   '<p class="tnote">Fuente: '+PV.sources.map(function(s){return esc(s.system)+' — '+esc(s.name)}).join('; ')+'. Descarga: '+esc(PV.downloadLabel)+'. Datos al '+esc(fDate(ASOF))+'.</p>'+
+   '<p class="tnote">Elaborado por '+esc(PV.author)+' · '+esc(PV.email)+' · Tel. '+esc(PV.phone)+' · '+esc(PV.city)+' · '+esc(PV.url.replace('https://',''))+'</p>';
   return {kind:'html',html:'<div class="blk">'+h+'</div>'};
 }
 
@@ -542,7 +544,7 @@ function coverHtml(){
   return '<div class="cover"><div class="top"><div class="inst">Universidad de Santander</div><div class="per">Periodo 2026-2 · Corte P1 (alertas tempranas)</div></div>'+
     '<div class="mid"><h1>Mapa de riesgo académico</h1><div class="sub">Cursos con reprobación ≥ 50 %</div>'+
     '<div class="figs">'+fig(fInt(a.ge50),'cursos con reprobación ≥ 50 %')+fig(fInt(a.progs),'programas con al menos uno')+fig(fInt(a.campus),a.campus===1?'campus':'campus')+'</div></div>'+
-    '<div class="bot"><div><strong>Campus:</strong> '+esc(selLabel())+'</div><div><strong>Contenido:</strong> '+esc(sel_.join(', ')||'sin secciones')+'</div><div><strong>Datos al</strong> '+esc(fDate(ASOF))+'. Sin nombres ni identificadores estudiantiles.</div></div></div>';
+    '<div class="bot"><div><strong>Campus:</strong> '+esc(selLabel())+'</div><div><strong>Contenido:</strong> '+esc(sel_.join(', ')||'sin secciones')+'</div><div><strong>Datos al</strong> '+esc(fDate(ASOF))+'. Sin nombres ni identificadores estudiantiles.</div><div><strong>Fuente:</strong> '+PV.sources.map(function(s){return esc(s.system)}).join(' y ')+' · descarga '+esc(PV.downloadLabel)+'</div><div><strong>Elaborado por</strong> '+esc(PV.author)+' · '+esc(PV.email)+' · '+esc(PV.url.replace('https://',''))+'</div></div></div>';
 }
 
 /* ---------- paginación por medición ---------- */
@@ -600,7 +602,7 @@ function render(){
   var total = pages.length, cls = 'doc'+(S.dens==='compact'?' compact':'')+(S.theme==='gray'?' gray':'');
   var stage = $('stage'); stage.style.setProperty('--pwpx',d.w*MM); stage.style.setProperty('--phpx',d.h*MM);
   var out = pages.map(function(p,i){
-    var foot = p.cover?'':'<div class="pfoot"><span>UDES · Mapa de riesgo académico 2026-2 · Corte P1</span><span>Datos al '+esc(fDateShort(ASOF))+' · Página '+(i+1)+' de '+total+'</span></div>';
+    var foot = p.cover?'':'<div class="pfoot"><span>UDES · Mapa de riesgo académico 2026-2 · Corte P1 · '+esc(PV.author)+'</span><span>Datos al '+esc(fDateShort(ASOF))+' · Página '+(i+1)+' de '+total+'</span></div>';
     return '<div class="pgwrap"><div class="pgbox"><div class="'+cls+' page" id="pg'+i+'"><div class="pbody">'+p.html+'</div>'+foot+'</div></div><div class="pgcap">Página '+(i+1)+' de '+total+(p.cover?' · portada':'')+'</div></div>';
   }).join('');
   $('pages').innerHTML = out || '<div class="empty" style="background:#fff;padding:24px;border-radius:6px;color:#555">No hay nada que exportar: activa la portada o al menos una sección.</div>';

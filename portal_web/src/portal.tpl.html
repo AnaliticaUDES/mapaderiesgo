@@ -353,6 +353,7 @@ footer{padding-block:36px 48px;font-size:13px;color:var(--muted)}
     </div>
     <div class="flow" id="flow"></div>
     <p class="files" id="files"></p>
+    <div class="flow" id="prov" style="margin-top:16px"></div>
   </section>
 </main>
 
@@ -682,14 +683,24 @@ function renderQuality(){
 }
 
 /* ---------- alcance ---------- */
+function renderProv(){
+  var V=D.report.provenance;if(!V)return;
+  var link=function(u){return '<a href="'+esc(u)+'" target="_blank" rel="noopener" style="color:inherit">'+esc(u.replace('https://',''))+'</a>'};
+  $('prov').innerHTML=
+    '<div class="panel"><h3>Fuente de los datos</h3>'+V.sources.map(function(s){return '<p><b>'+esc(s.system)+'</b><br>'+esc(s.name)+'</p>'}).join('')+'<p>Fecha de descarga: '+esc(V.downloadLabel)+'.</p></div>'+
+    '<div class="panel"><h3>Elaborado por</h3><p><b>'+esc(V.author)+'</b></p><p>Correo: <a href="mailto:'+esc(V.email)+'" style="color:inherit">'+esc(V.email)+'</a><br>Teléfono: '+esc(V.phone)+'<br>'+esc(V.city)+'<br>'+link(V.url)+'</p></div>';
+}
 function renderFlow(){
   $('flow').innerHTML=FLOW.map(function(f){return '<div class="panel"><h3>'+esc(f.title)+'</h3><p>'+esc(f.detail)+'</p></div>'}).join('');
   $('files').innerHTML='Fuentes: '+esc(SRC)+'. '+FILES.map(function(f){return '<code>'+esc(f)+'</code>'}).join(' ');
   var tp=D.title.split(' - ');$('title').innerHTML=esc(tp[0])+(tp[1]?'<span style="display:block;font-size:.55em;font-weight:500;color:var(--ink2);margin-top:8px;line-height:1.2">'+esc(tp[1].replace('50%','50'+NB+'%'))+'</span>':'');
   $('question').textContent=D.report.originalQuestion;
   $('asof').textContent=fdate(D.report.asOf);
+  renderProv();
   $('noticeText').textContent='Resultados del periodo 2026-2 al corte P1.';
-  $('foot').textContent='Universidad de Santander · '+D.title+' · Periodo 2026-2, corte P1 · '+fdate(D.report.asOf)+'. No incluye nombres ni identificadores estudiantiles.';
+  var V=D.report.provenance||{};
+  $('foot').innerHTML=esc('Universidad de Santander · '+D.title+' · Periodo 2026-2, corte P1 · '+fdate(D.report.asOf)+'. No incluye nombres ni identificadores estudiantiles.')+
+    (V.author?'<br>'+esc('Elaborado por '+V.author+' · Datos descargados el '+V.downloadLabel+' · ')+'<a href="'+esc(V.url)+'" target="_blank" rel="noopener" style="color:inherit">udes.edu.co</a>':'');
 }
 
 function renderAll(animateChange){

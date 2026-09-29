@@ -8,7 +8,26 @@
   "filters": [],
   "report": {
     "asOf": "2026-09-29",
-    "originalQuestion": "¿Qué cursos presentan reprobación de 50 % o más y en cuáles campus y programas se concentran?"
+    "originalQuestion": "¿Qué cursos presentan reprobación de 50 % o más y en cuáles campus y programas se concentran?",
+    "provenance": {
+      "sources": [
+        {
+          "system": "Sistema DaVinci UDES",
+          "name": "Reporte de rendimiento académico del corte 1 - 2026B de los tres campus"
+        },
+        {
+          "system": "Sistema Master UDES",
+          "name": "Reporte de rendimiento académico de los grupos del corte 1 - 2026B"
+        }
+      ],
+      "downloadDate": "2026-09-28",
+      "downloadLabel": "28 de septiembre de 2026",
+      "author": "Planeación Institucional UDES",
+      "email": "direccionplaneacion@udes.edu.co",
+      "phone": "(607) 6516500 Ext. 1130",
+      "city": "Bucaramanga, Colombia",
+      "url": "https://www.udes.edu.co"
+    }
   },
   "queries": {
     "institutional": {

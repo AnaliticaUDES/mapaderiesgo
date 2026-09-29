@@ -56,6 +56,19 @@ export function sentenceCase(s) {
 }
 
 const snap = JSON.parse(fs.readFileSync(src, "utf8"));
+snap.report.provenance = {
+  sources: [
+    { system: "Sistema DaVinci UDES", name: "Reporte de rendimiento académico del corte 1 - 2026B de los tres campus" },
+    { system: "Sistema Master UDES", name: "Reporte de rendimiento académico de los grupos del corte 1 - 2026B" },
+  ],
+  downloadDate: "2026-09-28",
+  downloadLabel: "28 de septiembre de 2026",
+  author: "Planeación Institucional UDES",
+  email: "direccionplaneacion@udes.edu.co",
+  phone: "(607) 6516500 Ext. 1130",
+  city: "Bucaramanga, Colombia",
+  url: "https://www.udes.edu.co",
+};
 for (const key of ["programs", "critical_courses"]) {
   for (const row of snap.queries[key].rows) {
     if (row.programa) row.programa = sentenceCase(row.programa);

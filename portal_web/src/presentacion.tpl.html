@@ -322,6 +322,7 @@ h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance}
 /* ================= Datos (embebidos, sin fetch) ================= */
 const DATA=JSON.parse(document.getElementById('data').textContent);
 const Q=DATA.queries, INST=Q.institutional.rows[0], CAMP=Q.campus.rows.slice(), PROG=Q.programs.rows, CRIT=Q.critical_courses.rows, QU=Q.quality.rows[0];
+const PV=DATA.report.provenance;
 const FLOW=Q.institutional.source.evidenceFlow, FILES=Q.institutional.source.files;
 
 /* ================= Formato ================= */
@@ -377,7 +378,7 @@ const ICON={
 /* 1 Portada */
 SL.push({key:'cover',kicker:'Portada',fig:'≥ 50 %',title:'Mapa de riesgo académico: cursos con reprobación de 50 % o más',
  notes:`Universidad de Santander, periodo 2026-2, corte P1. Este informe responde: ¿qué cursos presentan reprobación de 50 % o más y en qué campus y programas se concentran? Aclarar desde el inicio que P1 es una alerta temprana y no un resultado definitivo. Fuente: ${FILES.join(' y ')}.`,
- html:()=>`<div class="cover"><div class="cv-left"><p class="kicker" data-h>Universidad de Santander · 2026-2 · Corte P1</p><h1 data-h>Mapa de riesgo académico</h1><p class="cv-sub" data-h>Cursos con reprobación de 50 % o más y dónde se concentran</p><p class="badge" data-h>Alertas tempranas, no resultados definitivos</p></div><div class="cv-mark" aria-hidden="true"><span class="ge" data-m>≥</span><span class="n" data-m id="cvn">50</span><span class="pc" data-m>%</span></div></div><div class="cv-foot" data-f>${CAMP.map(c=>`<span>${esc(shortCamp(c.campus))}</span>`).join('')}</div>`,
+ html:()=>`<div class="cover"><div class="cv-left"><p class="kicker" data-h>Universidad de Santander · 2026-2 · Corte P1</p><h1 data-h>Mapa de riesgo académico</h1><p class="cv-sub" data-h>Cursos con reprobación de 50 % o más y dónde se concentran</p><p class="badge" data-h>Alertas tempranas, no resultados definitivos</p><p class="cv-sub" data-h style="font-size:20px;margin-top:22px">Elaborado por ${esc(PV.author)} · udes.edu.co</p></div><div class="cv-mark" aria-hidden="true"><span class="ge" data-m>≥</span><span class="n" data-m id="cvn">50</span><span class="pc" data-m>%</span></div></div><div class="cv-foot" data-f>${CAMP.map(c=>`<span>${esc(shortCamp(c.campus))}</span>`).join('')}</div>`,
  anim:(tl,q)=>{rise(tl,q('[data-h]'),0.05,{s:.1,y:20,d:.7});
   rise(tl,q('[data-m]'),0.15,{s:.06,y:30,d:.8});count(tl,q('#cvn')[0],50,0,0.15,1.2);rise(tl,q('[data-f] span'),0.7,{s:.08,y:8})}});
 
@@ -483,7 +484,14 @@ SL.push({key:'scope',kicker:'Alcance, privacidad y cálculo',fig:'Alcance',
   return head(this.kicker,this.title,'')+`<div class="bd">${FLOW.map((f,i)=>`<div class="sc" data-a>${ic[i]||''}<h3>${esc(f.title)}</h3><p>${esc(f.detail)}</p>${i===0?`<div class="files">${FILES.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}</div>`).join('')}</div>`},
  anim:(tl,q)=>{hdr(tl,q);rise(tl,q('.sc'),0.15,{s:.14,y:22,d:.7});if(!RM)tl.from(q('.sc svg'),{scale:.6,duration:.6,ease:'back.out(1.8)',stagger:.14,transformOrigin:'50% 50%'},0.35)}});
 
-/* 11 Cierre */
+/* 11 Fuentes y contacto */
+SL.push({key:'src',kicker:'Fuentes y contacto',fig:'Fuentes',
+ title:'Los datos vienen de DaVinci y Master, descargados el '+PV.downloadLabel,
+ notes:'Fuentes: '+PV.sources.map(s=>s.system+' ('+s.name+')').join('; ')+'. Descarga: '+PV.downloadLabel+'. Elaborado por '+PV.author+'. Contacto: '+PV.email+', '+PV.phone+', '+PV.city+'.',
+ html:function(){return head(this.kicker,this.title,'')+`<div class="bd"><div class="col" data-a><h3>Fuente de los datos</h3><ol>${PV.sources.map(s=>`<li data-a><b>${esc(s.system)}</b><small>${esc(s.name)}</small></li>`).join('')}<li data-a><b>Fecha de descarga</b><small>${esc(PV.downloadLabel)}</small></li></ol></div><div class="col" data-a><h3>Elaborado por</h3><ol><li data-a><b>${esc(PV.author)}</b><small>${esc(PV.city)}</small></li><li data-a><b>Correo</b><small>${esc(PV.email)}</small></li><li data-a><b>Teléfono</b><small>${esc(PV.phone)}</small></li><li data-a><b>Sitio web</b><small>${esc(PV.url.replace('https://',''))}</small></li></ol></div></div>`},
+ anim:(tl,q)=>{hdr(tl,q);rise(tl,q('.col'),0.15,{s:.14,y:22,d:.7});}});
+
+/* 12 Cierre */
 SL.push({key:'end',kicker:'Próximos pasos',fig:'P2',
  title:'Antes de decidir, confirmar en P2 si las alertas se sostienen',
  notes:'Los tres primeros puntos se derivan directamente del dato (cobertura de P2 y P3, filas con grano duplicado, cursos suprimidos). Los otros dos son sugerencias del equipo de análisis: el dato no las exige y deben validarse con las coordinaciones académicas antes de comunicarse como decisiones.',
