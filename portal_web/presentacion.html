@@ -359,7 +359,7 @@ const bandMax=Math.max(...BANDS.map(b=>b.n));
 const matr=CRIT.map(r=>r.matriculados).sort((a,b)=>a-b);
 const median=matr.length%2?matr[(matr.length-1)/2]:(matr[matr.length/2-1]+matr[matr.length/2])/2;
 const small15=CRIT.filter(r=>r.matriculados<=15).length;
-const pIdi=PROG.find(r=>/IDIOMAS/.test(r.programa)), pMor=PROG.slice().filter(r=>r.cursos_ge_50>0).sort((a,b)=>b.tasa_reprobacion_pct-a.tasa_reprobacion_pct)[0];
+const pIdi=PROG.find(r=>/idiomas/i.test(r.programa)), pMor=PROG.slice().filter(r=>r.cursos_ge_50>0).sort((a,b)=>b.tasa_reprobacion_pct-a.tasa_reprobacion_pct)[0];
 const pMat=PROG.find(r=>/^MATEMATICAS/.test(r.programa));
 const shortCamp=c=>tc(c);
 
