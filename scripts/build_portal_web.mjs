@@ -68,13 +68,39 @@ const slim = { report: snap.report };
 for (const [k, q] of Object.entries(snap.queries)) slim[k] = { label: q.label, rows: q.rows };
 slim.institutional.source = snap.queries.institutional.source;
 
+// Las plantillas son fragmentos (título + estilos + contenido); aquí se envuelven en un documento completo.
+const wrap = (fragment, extra = "") => {
+  const title = fragment.match(/<title>[sS]*?</title>/)?.[0] ?? "";
+  fragment = fragment.replace(title, "");
+  return `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+${title}
+<style>html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+${fragment}${extra}
+</body>
+</html>
+`;
+};
+const NAV = `
+<nav aria-label="Otras vistas" style="max-width:1100px;margin:0 auto;padding:24px 16px 40px;font:14px/1.5 system-ui,sans-serif;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 20px">
+<span>Otras vistas:</span><a href="/presentacion" style="color:inherit">Presentación</a><a href="/exportar" style="color:inherit">Exportar reportes</a>
+</nav>`;
+
 const embed = (o) => JSON.stringify(o).replace(/</g, "\u003c");
+const extras = { portal: NAV };
 const pages = { portal: ["index.html", snap], presentacion: ["presentacion.html", snap], exportar: ["exportar.html", slim] };
 
 fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, "data.normalizada.json"), JSON.stringify(snap, null, 2));
 for (const [tpl, [file, data]] of Object.entries(pages)) {
-  const html = fs.readFileSync(path.join(out, "src", `${tpl}.tpl.html`), "utf8").replace("__DATA__", () => embed(data));
+  let html = fs.readFileSync(path.join(out, "src", `${tpl}.tpl.html`), "utf8").replace("__DATA__", () => embed(data));
+  html = wrap(html, extras[tpl] ?? "");
   fs.writeFileSync(path.join(out, file), html);
   console.log(file, html.length);
 }
