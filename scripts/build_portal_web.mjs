@@ -70,7 +70,7 @@ slim.institutional.source = snap.queries.institutional.source;
 
 // Las plantillas son fragmentos (título + estilos + contenido); aquí se envuelven en un documento completo.
 const wrap = (fragment, extra = "") => {
-  const title = fragment.match(/<title>[sS]*?</title>/)?.[0] ?? "";
+  const title = fragment.match(/<title>[\s\S]*?<\/title>/)?.[0] ?? "";
   fragment = fragment.replace(title, "");
   return `<!doctype html>
 <html lang="es">
